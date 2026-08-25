@@ -1,0 +1,183 @@
+NOTICE
+======
+
+The plugin's own code is MIT (see LICENSE). This file records what in this
+repository is *not* its own work, where each piece came from, and what is known
+about the terms it comes under. It also records what the plugin fetches onto a
+user's machine at deploy time but does not carry here, because that is the
+larger half of what it uses.
+
+Where something is uncertain, it says so. Nothing below is a legal opinion.
+
+
+1. Third-party material carried in this repository
+--------------------------------------------------
+
+payload/rime-japanese/japanese_tw_eng.schema.yaml
+payload/rime-japanese/sno_japanese.schema.yaml
+
+    Composed for this plugin, and derived works of
+
+        https://github.com/snomiao/rime-snomiao
+        Rime/sno_jpn_wubi86_eng.schema.yaml
+        at revision a2f3e7c7505abe567ec282ce61f754885c413e88
+
+    Neither file exists upstream under these names, but most of what makes them
+    work is upstream's: the speller algebra, the `japanese_lookup`,
+    `japanese_pinyin_lookup`, `translate_en2jp_lookup` and reverse-lookup
+    blocks, the `comment_format` chains, the `editor` binding, the `menu`
+    block. sno_japanese's romaji half traces further back, to
+
+        https://github.com/gkovacs/rime-japanese
+        japanese.schema.yaml
+        at revision 4c1e65135459175136f380e90ba52acb40fdfb2d
+
+    Both files carry that attribution in their own headers, and the `author:`
+    lists inside them are upstream's own, with the names and addresses upstream
+    wrote.
+
+    Terms: see section 3 - neither repository ships a licence file.
+
+payload/rime-japanese/opencc/jpzh.json
+
+    An OpenCC configuration derived from snomiao's Rime/opencc/zhjp.json at the
+    revision above: the same segmentation and conversion chain over the same two
+    dictionaries, with the `name` field changed. It exists because snomiao's own
+    schema names `jpzh.json` and the repository does not ship one. JSON has no
+    comment syntax, so this entry is its only attribution.
+
+    Terms: see section 3.
+
+payload/rime-japanese/opencc/hiragana_katakana.json
+payload/rime-japanese/opencc/hiragana_katakana.txt
+
+    An OpenCC configuration and its dictionary, mapping each hiragana to its
+    katakana. **Provenance not fully established.** No file of either name
+    exists in either pinned upstream, and a search turned up no repository that
+    publishes them under these names; the nearest thing found - momijineko's
+    Rime-KappaJP - uses different filenames (`hira2kata.json`, `hirakata.ocd`).
+    The .txt is the mechanical Unicode hiragana-to-katakana correspondence, 84
+    lines of it, which is a fact rather than an authored table; the .json is
+    OpenCC's ordinary config skeleton with those two filenames in it. Both are
+    therefore treated as written here. If anyone recognises them as theirs,
+    please open an issue and they will be credited or removed.
+
+payload/fcitx5/config
+payload/fcitx5/conf/*.conf
+
+    Fcitx5 settings in Fcitx5's own configuration format, produced by Fcitx5's
+    own configuration writer on a configured machine and then trimmed to what
+    this plugin has an opinion about. The values are this plugin's choices; the
+    `# ...` comment above each key is the option label Fcitx5 itself emits.
+    Fcitx5 is LGPL-2.1-or-later.
+
+
+2. Not third-party material, despite appearances
+-------------------------------------------------
+
+tests/fixtures/cedict-sample.u8
+
+    A test fixture written for this repository, in CC-CEDICT's line format. It
+    is **not** CC-CEDICT and contains no CC-CEDICT entries. An earlier version
+    of this file was a verbatim excerpt of the published dictionary, header and
+    all; it was replaced, because a test needs the format and not upstream's
+    entries. The format itself - comment lines, a `#!` metadata block, then
+    `Traditional Simplified [pin1 yin1] /sense/sense/` - is not anybody's
+    property. The file's own header says all of this too.
+
+payload/rime/lua/annotate.lua
+
+    Written for this plugin. It parses CC-CEDICT's published line format; it
+    embeds none of its data. The counts in its comments are measurements taken
+    over the published file, not extracts from it.
+
+
+3. What is known about the two Rime upstreams' terms
+-----------------------------------------------------
+
+https://github.com/gkovacs/rime-japanese
+
+    **No licence.** There is no LICENSE or COPYING file at the pinned revision,
+    the README says nothing about terms, and GitHub's own repository metadata
+    reports no licence. No permission to redistribute has been granted by the
+    author, and the author has not been contacted. This repository therefore
+    redistributes none of its files: everything from it is fetched from GitHub
+    onto the user's own machine at deploy time (section 4). What is carried here
+    is sno_japanese.schema.yaml, whose romaji half derives from that repository
+    and which credits it.
+
+https://github.com/snomiao/rime-snomiao
+
+    **No licence file; an ISC declaration in package.json.** There is no LICENSE
+    or COPYING file at the pinned revision and GitHub reports no licence, but
+    the repository's package.json carries `"license": "ISC"` and a `"files"`
+    list that publishes the `Rime` directory to npm. That is a deliberate
+    statement of terms by the author over the material this plugin uses, and it
+    is what the two derived schema files and jpzh.json rely on. It is worth
+    being plain that a package.json field is a weaker artefact than a licence
+    text: it is what the author declared for the published package, no more.
+    The author has not been contacted.
+
+Because neither upstream ships a licence file, the plugin's rule is to
+redistribute nothing from either of them. Every file it needs from them is
+fetched at deploy time, byte for byte, from the publisher's own repository at a
+pinned commit - see lib/assets.py, `SOURCE_FILES`. Four files used to be shipped
+here as edited copies and are not any more:
+
+    japanese.dict.yaml         (from gkovacs/rime-japanese)
+    japanese_pinyin.schema.yaml   (from snomiao/rime-snomiao)
+    translate_en2jp.schema.yaml   (from snomiao/rime-snomiao)
+    opencc/zhjp.json              (from snomiao/rime-snomiao)
+
+
+4. Fetched at deploy time, not carried here
+--------------------------------------------
+
+None of the following is in this repository. Each is downloaded onto the user's
+own machine when a setting asks for it, byte for byte as its publisher
+publishes it, and read where it lands. Their own headers carry their own
+attribution, and this list is a record of what those headers say.
+
+From gkovacs/rime-japanese, at revision 4c1e6513...:
+
+    japanese.dict.yaml          the `japanese` dictionary header
+    japanese.mozc.dict.yaml     "converted from dictionaries of mozc"
+                                (https://github.com/google/mozc - Mozc is
+                                BSD-3-Clause)
+    japanese.jmdict.dict.yaml   converted from JMdict, which its own header
+                                describes as the property of the Electronic
+                                Dictionary Research and Development Group, used
+                                under the EDRDG licence
+                                (http://www.edrdg.org/edrdg/licence.html)
+    japanese.kana.dict.yaml     a Hepburn romanization table
+
+From snomiao/rime-snomiao, at revision a2f3e7c7...:
+
+    japanese_pinyin.schema.yaml     upstream credits 佛振 <chen.sst@gmail.com>
+                                    and Snowstar Miao <snomiao@gmail.com>, and
+                                    its description credits CC-CEDICT, the
+                                    Android Open Source Project, Chewing and
+                                    opencc
+    translate_en2jp.schema.yaml     upstream credits snomiao <snomiao@gmail.com>
+    japanese_pinyin.dict.yaml       "Derived from android open source project"
+    japanese_pinyin_simp.dict.yaml  ditto
+    japanese_chars.dict.yaml        ditto
+    pinyin_simp.dict.yaml           ditto
+                                    (AOSP is Apache-2.0)
+    translate_en2jp.dict.yaml       no source stated upstream
+    opencc/zhjp.json                OpenCC configuration
+    opencc/zhjp_daily.txt           conversion dictionaries
+    opencc/zhjp_word.txt
+
+From MDBG:
+
+    cedict_1_0_ts_utf-8_mdbg.txt    CC-CEDICT, CC-BY-SA 4.0, published by MDBG
+                                    (https://www.mdbg.net/chinese/dictionary?page=cc-cedict).
+                                    Downloaded, decompressed - gzip is the only
+                                    thing removed - and read as published. The
+                                    attribution and share-alike obligations stay
+                                    with the file and its publisher.
+
+Rime Ice, the schemas the plugin's Chinese input is built on, is installed as a
+distribution package (`rime-ice-git`) rather than vendored, and is not
+redistributed here either.

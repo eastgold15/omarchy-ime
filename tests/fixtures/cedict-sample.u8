@@ -1,0 +1,43 @@
+# Test fixture for payload/rime/lua/annotate.lua.
+#
+# This is NOT CC-CEDICT and contains no CC-CEDICT data. Every entry below was
+# written for this repository, to exercise one thing the filter does; the file
+# order and the wording of the glosses are what the tests assert against, so
+# both are part of the test rather than a sample of anything.
+#
+# What it does copy from CC-CEDICT is the line format, which is not anybody's
+# property: comment lines, then the metadata block, then one entry per line as
+#
+#   Traditional Simplified [pin1 yin1] /sense one/sense two/
+#
+# with CRLF endings, the way the published file is written. The filter parses
+# the published file directly, so the fixture has to arrive in the same shape.
+# The metadata values below are this fixture's own and describe nothing else.
+#
+#! version=1
+#! subversion=0
+#! format=ts
+#! charset=UTF-8
+#! date=2026-08-26T00:00:00Z
+五筆 五笔 [wu3 bi3] /abbr. for 五筆字型|五笔字型[wu3 bi3 zi4 xing2]/
+倉頡輸入法 仓颉输入法 [Cang1 jie2 shu1 ru4 fa3] /Cangjie input method, devised by Chu Bong-Foo 朱邦復|朱邦复[Zhu1 Bang1 fu4]/
+候選 候选 [hou4 xuan3] /candidate/Taiwan pr. [hou4 xuan4]/
+全 全 [quan2] /all/complete; entire; total/to make whole/(literary) without exception/also pr. [quan3] in some dialects/
+全形 全形 [quan2 xing2] /(of a character) drawn at full width/(in a candidate window) the wide form of a latin letter, taking two columns/see also 半形[ban4 xing2]/
+半形 半形 [ban4 xing2] /half width; narrow form/single-byte form/see also 全形[quan2 xing2]/
+半角 半角 [ban4 jiao3] /see 半形|半形[ban4 xing2]/
+又作 又作 [you4 zuo4] /also written as/
+合音 合音 [he2 yin1] /contraction of two syllables into one/
+快捷鍵 快捷键 [kuai4 jie2 jian4] /a key combination that runs a command without opening a menu/
+提示 提示 [ti2 shi4] /hint; tip/prompt/
+提示符 提示符 [ti2 shi4 fu2] /prompt/
+早上好 早上好 [zao3 shang4 hao3] /good morning; morning/
+異體字 异体字 [yi4 ti3 zi4] /variant of 異形字|异形字[yi4 xing2 zi4]/
+碼 码 [Ma3] /surname Ma/
+碼 码 [ma3] /code/
+編碼 编码 [bian1 ma3] /code; encoding/
+視窗 视窗 [shi4 chuang1] /window/frame; pane/(bound form) a screen area/(archaic) an opening in a wall for light and air/classifier for panes of glass in a frame/
+設定 设定 [she4 ding4] /to set; to configure/to establish; to lay down/to assign a value/to define a boundary/to fix in advance/
+詞典 词典 [ci2 dian3] /dictionary/CL:部|部[bu4]/
+輸入法 输入法 [shu1 ru4 fa3] /input method; IME/
+輸入法候選視窗 输入法候选视窗 [shu1 ru4 fa3 hou4 xuan3 shi4 chuang1] /the candidate window an input method draws/

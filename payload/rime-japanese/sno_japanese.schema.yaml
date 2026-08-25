@@ -1,0 +1,139 @@
+# sno_japanese.schema.yaml
+#
+# A schema composed for the ryuhzk.ime Omarchy plugin: Japanese romaji input
+# and nothing else. It is not upstream's file, and it is not a copy of one, but
+# the parts that make it work are upstream's - the speller algebra, the
+# japanese_lookup and japanese_reverse_lookup blocks, the `xlit|q|ー|` formats
+# and the editor binding all come from snomiao's sno_jpn_wubi86_eng, whose
+# romaji half in turn comes from ensigma96's japanese schema.
+#
+# Upstream:
+#   https://github.com/snomiao/rime-snomiao
+#     Rime/sno_jpn_wubi86_eng.schema.yaml
+#     at revision a2f3e7c7505abe567ec282ce61f754885c413e88
+#   https://github.com/gkovacs/rime-japanese
+#     japanese.schema.yaml
+#     at revision 4c1e65135459175136f380e90ba52acb40fdfb2d
+#
+# Neither repository ships a LICENSE file. See NOTICE in this repository.
+
+schema:
+  schema_id: sno_japanese
+  name: Japanese
+  version: "2.1.0"
+  author:
+    - ensigma96 <ensigma96@gmail.com>
+    - snomiao <snomiao@gmail.com>
+  description: |
+    Focused Japanese Romaji input.
+    Composed for the ryuhzk.ime Omarchy plugin from snomiao's
+    sno_jpn_wubi86_eng schema (github.com/snomiao/rime-snomiao) and
+    ensigma96's japanese schema (github.com/gkovacs/rime-japanese).
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [日文, 西文]
+  - name: full_shape
+    states: [半角, 全角]
+  - name: simplification
+    reset: 0
+    states: [漢字, 汉字]
+  - name: ascii_punct
+    states: [。，, ．，]
+  - name: hiragana_katakana
+    reset: 0
+    states: [平假名, 片假名]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - affix_segmentor@japanese_lookup
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - table_translator@japanese_lookup
+    - script_translator
+  filters:
+    - simplifier
+    - simplifier@hiragana_katakana_converter
+    - uniquifier
+    - reverse_lookup_filter@japanese_reverse_lookup
+
+speller:
+  alphabet: "zyxwvutsrqponmlkjihgfedcba-_"
+  delimiter: " '"
+  algebra:
+    - derive/_/x/
+    - derive/-/q/
+    - derive/i_e/ye/
+    - derive/tu/tsu/
+    - derive/si/shi/
+
+abc_segmentor:
+  extra_tags: [japanese_lookup]
+
+translator:
+  dictionary: japanese
+  enable_completion: false
+  spelling_hints: 5
+  comment_format:
+    - "xlit|q|ー|"
+  preedit_format:
+    - "xlit|q|ー|"
+
+japanese_lookup:
+  dictionary: japanese
+  enable_completion: false
+  spelling_hints: 5
+  comment_format:
+    - "xlit|q|ー|"
+  preedit_format:
+    - "xlit|q|ー|"
+
+hiragana_katakana_converter:
+  option_name: hiragana_katakana
+  opencc_config: hiragana_katakana.json
+  tips: none
+
+japanese_reverse_lookup:
+  spelling_hints: 2
+  dictionary: japanese
+  comment_format:
+    - "xlit|q|ー|"
+
+recognizer:
+  import_preset: default
+  patterns:
+    punct: "^/([0-9]+[a-z]*|[a-z]+)$"
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+  bindings:
+    - { accept: "Control+Shift+1", toggle: ascii_mode, when: always }
+    - { accept: "Control+Shift+2", toggle: full_shape, when: always }
+    - { accept: "Control+Shift+3", toggle: ascii_punct, when: always }
+    - { accept: "Control+Shift+4", toggle: simplification, when: always }
+    - { accept: "Control+Shift+5", toggle: hiragana_katakana, when: always }
+
+editor:
+  bindings:
+    Shift_R: commit_comment
+
+menu:
+  page_size: 10

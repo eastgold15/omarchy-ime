@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "id": "ryuhzk.ime",
+  "name": "Input Method",
+  "version": "0.1.0",
+  "author": "ryuhzk",
+  "license": "MIT",
+  "description": "Own the whole input method from the bar: Fcitx5, Rime, and candidate annotation.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Input Method",
+    "description": "Live input state, schema switching, and every Fcitx5 and Rime setting in one place.",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "schemas": [
+        "rime_ice"
+      ],
+      "annotateChinese": true,
+      "annotateEnglish": true,
+      "annotateShowPinyin": false,
+      "annotateHotkey": "Control+e",
+      "traditionalize": true,
+      "pageSize": 10,
+      "verticalCandidates": true,
+      "backgroundImageLight": "",
+      "backgroundImageDark": "",
+      "panelWidth": 420
+    },
+    "schema": [
+      {
+        "key": "schemas",
+        "type": "multiselect",
+        "label": "Input schemas",
+        "description": "Which Rime schemas are deployed, in the order Rime offers them. Every option is listed under its family; the option's own id is what Rime calls it, and the panel shows each schema's readable name beside it. At least one Chinese schema has to stay selected.",
+        "noSelectionText": "Rime Ice only",
+        "placeholderText": "Search schemas...",
+        "emptyText": "No schemas",
+        "defaultValue": [
+          "rime_ice"
+        ],
+        "options": [
+          {
+            "value": "rime_ice",
+            "description": "Full pinyin"
+          },
+          {
+            "value": "luna_pinyin",
+            "description": "Full pinyin"
+          },
+          {
+            "value": "luna_quanpin",
+            "description": "Full pinyin"
+          },
+          {
+            "value": "luna_pinyin_simp",
+            "description": "Full pinyin"
+          },
+          {
+            "value": "luna_pinyin_tw",
+            "description": "Full pinyin"
+          },
+          {
+            "value": "luna_pinyin_fluency",
+            "description": "Full pinyin"
+          },
+          {
+            "value": "double_pinyin",
+            "description": "Double pinyin"
+          },
+          {
+            "value": "double_pinyin_flypy",
+            "description": "Double pinyin"
+          },
+          {
+            "value": "double_pinyin_mspy",
+            "description": "Double pinyin"
+          },
+          {
+            "value": "double_pinyin_sogou",
+            "description": "Double pinyin"
+          },
+          {
+            "value": "double_pinyin_jiajia",
+            "description": "Double pinyin"
+          },
+          {
+            "value": "double_pinyin_ziguang",
+            "description": "Double pinyin"
+          },
+          {
+            "value": "double_pinyin_abc",
+            "description": "Double pinyin"
+          },
+          {
+            "value": "bopomofo",
+            "description": "Zhuyin"
+          },
+          {
+            "value": "bopomofo_tw",
+            "description": "Zhuyin"
+          },
+          {
+            "value": "bopomofo_express",
+            "description": "Zhuyin"
+          },
+          {
+            "value": "cangjie5",
+            "description": "Shape"
+          },
+          {
+            "value": "cangjie5_express",
+            "description": "Shape"
+          },
+          {
+            "value": "radical_pinyin",
+            "description": "Shape"
+          },
+          {
+            "value": "terra_pinyin",
+            "description": "Other"
+          },
+          {
+            "value": "terra_pinyin_12345",
+            "description": "Other"
+          },
+          {
+            "value": "japanese_tw_eng",
+            "description": "Japanese"
+          },
+          {
+            "value": "sno_japanese",
+            "description": "Japanese"
+          }
+        ]
+      },
+      {
+        "key": "annotateChinese",
+        "type": "boolean",
+        "label": "English gloss on Chinese",
+        "defaultValue": true,
+        "description": "Show what a Chinese candidate means in English."
+      },
+      {
+        "key": "annotateEnglish",
+        "type": "boolean",
+        "label": "Chinese gloss on English",
+        "defaultValue": true,
+        "description": "Show what an English candidate means in Chinese."
+      },
+      {
+        "key": "annotateShowPinyin",
+        "type": "boolean",
+        "label": "Pinyin in the gloss",
+        "defaultValue": false,
+        "description": "Prefix the gloss with the candidate's pinyin. Off by default: the gloss is what the feature is for, and the pinyin is already in what you just typed."
+      },
+      {
+        "key": "annotateHotkey",
+        "type": "string",
+        "label": "Annotation hotkey",
+        "defaultValue": "Control+e",
+        "description": "Toggles the glosses while composing. It stays free everywhere else, so terminals keep their own binding for this key."
+      },
+      {
+        "key": "traditionalize",
+        "type": "boolean",
+        "label": "Traditional output",
+        "defaultValue": true,
+        "description": "Convert output to traditional Chinese using the s2twp profile."
+      },
+      {
+        "key": "pageSize",
+        "type": "integer",
+        "label": "Candidates per page",
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "defaultValue": 10,
+        "description": "How many candidates Rime shows at once."
+      },
+      {
+        "key": "verticalCandidates",
+        "type": "boolean",
+        "label": "Vertical candidate list",
+        "defaultValue": true,
+        "description": "Stack candidates vertically instead of in a row."
+      },
+      {
+        "key": "backgroundImageLight",
+        "type": "string",
+        "label": "Light theme background",
+        "defaultValue": "",
+        "description": "Absolute path to an image drawn behind the candidates while a light Omarchy theme is active. Leave empty for the theme's own background colour. Accepts .png, .svg, .svgz, .jpg, .jpeg, .jpe, .webp, .bmp and .gif. The image replaces the generated panel rather than tinting it, so the theme colour shows only if the file cannot be loaded."
+      },
+      {
+        "key": "backgroundImageDark",
+        "type": "string",
+        "label": "Dark theme background",
+        "defaultValue": "",
+        "description": "Absolute path to an image drawn behind the candidates while a dark Omarchy theme is active. Leave empty for the theme's own background colour. Two images rather than one because an image chosen against a dark theme is unreadable under a light one, and the candidate window follows whichever theme is switched on."
+      },
+      {
+        "key": "panelWidth",
+        "type": "integer",
+        "label": "Panel width",
+        "min": 400,
+        "max": 720,
+        "step": 10,
+        "defaultValue": 420,
+        "description": "Width of the popup panel in layout units. The lower bound is the narrowest panel at which every settings label still fits beside its control without eliding."
+      }
+    ]
+  }
+}

@@ -1,0 +1,670 @@
+#!/usr/bin/env python3
+"""Deploy and manage the Omarchy input method.
+
+Every filesystem write the plugin performs goes through this command. Panel.qml
+displays state and expresses intent; it never touches the filesystem itself, so
+there is one place to audit what the plugin does to a machine.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from lib import deploy as deploy_lib  # noqa: E402
+from lib import assets, hooks, hyprland, imestate, packages, settings  # noqa: E402
+
+VERSION = "0.1.0"
+
+PLUGIN_DIR = Path(__file__).resolve().parent
+
+
+def _xdg(variable: str, default: str) -> Path:
+    return Path(os.environ.get(variable) or Path.home() / default)
+
+
+def rime_dir() -> Path:
+    return _xdg("XDG_DATA_HOME", ".local/share") / "fcitx5" / "rime"
+
+
+def state_dir() -> Path:
+    return _xdg("XDG_STATE_HOME", ".local/state") / "omarchy-ime"
+
+
+def cache_dir() -> Path:
+    return _xdg("XDG_CACHE_HOME", ".cache") / "omarchy-ime"
+
+
+def shell_json() -> Path:
+    return _xdg("XDG_CONFIG_HOME", ".config") / "omarchy" / "shell.json"
+
+
+def rime_build_dir() -> Path:
+    """Where Rime writes the schemas it has compiled.
+
+    The D-Bus interface hands out schema ids and nothing else, so the readable
+    name of a schema only exists here, in the file Rime built.
+    """
+    return rime_dir() / "build"
+
+
+def schema_source_dirs() -> list[Path]:
+    """Every directory a schema's source yaml may live in, nearest first.
+
+    A schema's readable name is the `name:` in its own schema yaml, so the name
+    the settings picker shows is read from these rather than invented. The
+    user's own Rime directory comes first because a schema they installed
+    themselves shadows the packaged one; /usr/share/rime-data is where the
+    distribution's schemas live; the plugin's payload is where the Japanese two
+    live before they are deployed, so they can be named before they exist on the
+    user's disk.
+    """
+    return [
+        rime_dir(),
+        Path("/usr/share/rime-data"),
+        PLUGIN_DIR / "payload" / "rime-japanese",
+    ]
+
+
+def schema_display_name(schema_id: str) -> str | None:
+    """The name a schema calls itself, from the first directory that has it."""
+    for directory in schema_source_dirs():
+        name = imestate.schema_name(schema_id, directory)
+        if name:
+            return name
+    return None
+
+
+def themes_dir() -> Path:
+    return targets()[deploy_lib.THEME_TARGET]
+
+
+def hooks_dir() -> Path:
+    return hooks.hook_dir(_xdg("XDG_CONFIG_HOME", ".config"))
+
+
+def environment_dir() -> Path:
+    """systemd's per-user environment.d.
+
+    It is read after /usr/lib/environment.d, which is the whole reason the
+    override works: a file here with the packaged file's own name replaces it.
+    """
+    return _xdg("XDG_CONFIG_HOME", ".config") / "environment.d"
+
+
+def dictionary_path() -> Path:
+    """Where the downloaded annotation dictionary lives.
+
+    The layout belongs to lib/assets.py, which is what downloads it; asking it
+    here keeps the reported path and the downloaded path the same path.
+    """
+    return assets.dictionary_path(cache_dir())
+
+
+def targets() -> dict:
+    """Every directory this plugin puts files into, by manifest target name.
+
+    This is what an uninstall walks, so the theme-set hook is one of them: a
+    hook left pointing at a plugin that is gone is exactly the litter the
+    manifest exists to prevent.
+    """
+    data_home = _xdg("XDG_DATA_HOME", ".local/share")
+    return {
+        "rime": rime_dir(),
+        "fcitx5": _xdg("XDG_CONFIG_HOME", ".config") / "fcitx5",
+        deploy_lib.THEME_TARGET: data_home / "fcitx5" / "themes",
+        deploy_lib.ENVIRONMENT_TARGET: environment_dir(),
+        hooks.TARGET: hooks_dir(),
+    }
+
+
+def deploy_targets() -> dict:
+    """The targets a deploy writes into - every one except the hook's.
+
+    A deploy removes anything the previous manifest listed and it did not write
+    this time. The hook is installed on its own lifecycle command and is never
+    something a deploy writes, so handing deploy its directory would make every
+    deploy delete the hook as a stale file.
+    """
+    return {name: path for name, path in targets().items() if name != hooks.TARGET}
+
+
+def _report(grouped: dict) -> None:
+    for target, paths in sorted(grouped.items()):
+        for relative in paths:
+            print(f"{target}/{relative}")
+
+
+def cmd_deploy(_args) -> int:
+    resolved = settings.load(shell_json())
+
+    # Said before the work rather than after it. `default.custom.yaml` opens
+    # with `__include: rime_ice_suggestion:/`, which only rime-ice-git provides;
+    # with the packages absent the deployer exits non-zero and prints nothing at
+    # all, so the user gets a deploy that appears to work and an input method
+    # that does not.
+    absent = packages.check()
+    if absent["missing"]:
+        print(
+            deploy_lib.WARNING + "packages: "
+            + ", ".join(absent["missing"])
+            + " are not installed, so Rime cannot build this configuration;"
+              " run `ime-manager packages install` first"
+        )
+
+    # Downloading the dictionary is part of resolving where it is: a failure
+    # returns the path anyway, so the schema is generated pointing at a file that
+    # may not be there yet, which the filter reads as an empty dictionary.
+    # `notice=print` is what makes a dictionary refresh visible. Upstream serves
+    # one mutable URL, so the file can change under the user between deploys;
+    # this is where a release that is not the cached one says so, and where a
+    # download refused for failing its checks says why instead of vanishing.
+    dictionary = deploy_lib.resolve_dictionary(resolved, cache_dir(), notice=print)
+    # The candidate window's theme is generated from whichever Omarchy theme is
+    # switched on right now, so `notice` is how the user finds out which one
+    # that was - and, when it could not be read, that they are looking at the
+    # fallback rather than at their desktop.
+    installed = deploy_lib.deploy(
+        resolved, deploy_targets(), state_dir(), PLUGIN_DIR / "payload",
+        asset_provider=deploy_lib.cached_source_provider(cache_dir()),
+        dictionary_path=dictionary,
+        theme_source=theme_source(resolved),
+        notice=print,
+    )
+    # The manifest deploy just wrote is built from the files deploy wrote, and
+    # the hook is not one of them - so its entry has to go back in, or the next
+    # uninstall walks straight past a hook that is still installed.
+    hooks.sync(hooks_dir(), state_dir())
+    _report(installed)
+
+    # Rime only reads these files when it builds, so a deploy that stops here
+    # has changed nothing the user can see. Worse, a file Rime refuses to build
+    # takes the whole schema down: the failure that has to be loudest is the one
+    # that leaves someone unable to type.
+    #
+    # The verdict is checked against what Rime *built*, not only against what it
+    # complained about: a build can fail in complete silence, so the schemas the
+    # deploy just wrote into schema_list are looked for in the build directory.
+    # They are read back off disk rather than taken from the settings, because a
+    # schema whose tables could not be fetched is withheld from this deploy and
+    # must not then be reported as one Rime failed to build.
+    rebuild = deploy_lib.redeploy(
+        schemas=deploy_lib.deployed_schemas(rime_dir()),
+        build_dir=rime_build_dir(),
+        since=deploy_lib.newest_write(installed, deploy_targets()),
+    )
+    if not rebuild["succeeded"]:
+        print(f"ime-manager: {rebuild['detail']}", file=sys.stderr)
+        for line in rebuild["errors"]:
+            print(f"  {line}", file=sys.stderr)
+        print(
+            "ime-manager: the configuration is on disk but is NOT in effect;"
+            " input may be broken until this is fixed",
+            file=sys.stderr,
+        )
+        return 1
+    # Succeeded without evidence. Nothing is wrong, and saying "rebuilt" would
+    # be claiming to have watched something this could not see - which is the
+    # ordinary case on a machine where fcitx5 has not started yet.
+    if not rebuild["verified"]:
+        print(f"rime: {rebuild['detail']}")
+        return 0
+    print("rime: rebuilt")
+    return 0
+
+
+def _human(size: float) -> str:
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024 or unit == "GB":
+            return f"{size:.0f} {unit}"
+        size /= 1024
+    return f"{size:.0f} GB"
+
+
+def drop_cache() -> int:
+    """Remove the downloaded assets. Returns the bytes that were there.
+
+    The cache is this plugin's - clones of the Rime sources, keyed by the commit
+    they are pinned to, and the CC-CEDICT download - and it is the largest thing
+    the plugin puts on a machine by two orders of magnitude. Leaving 300MB
+    behind after an uninstall is not an uninstall.
+    """
+    directory = cache_dir()
+    total = 0
+    for path in directory.rglob("*"):
+        if path.is_file() and not path.is_symlink():
+            try:
+                total += path.stat().st_size
+            except OSError:
+                continue
+    shutil.rmtree(directory, ignore_errors=True)
+    return total
+
+
+def cmd_uninstall(args) -> int:
+    result = deploy_lib.uninstall(state_dir(), targets())
+    _report(result["removed"])
+    # A file this plugin wrote over is put back, not taken away: some of them -
+    # Omarchy's own fcitx5 conf files, the user's Fcitx5 profile - were never
+    # ours to delete.
+    for target, paths in sorted(result["restored"].items()):
+        for relative in paths:
+            print(f"restored {target}/{relative}")
+    # Taking our environment.d file away is what puts the packaged one back, and
+    # systemd reads that directory at session start - so the removal is on disk
+    # now and in effect later. Said here for the same reason a deploy says it:
+    # otherwise the user tests a change that cannot have happened yet.
+    if deploy_lib.ENVIRONMENT_TARGET in result["removed"]:
+        print(
+            "environment: the packaged QT_IM_MODULE setting applies again"
+            " from your next login"
+        )
+    if getattr(args, "keep_cache", False):
+        print(f"cache: kept at {cache_dir()}")
+    else:
+        freed = drop_cache()
+        if freed:
+            print(f"cache: removed {_human(freed)} from {cache_dir()}")
+    return 0
+
+
+def cmd_state(args) -> int:
+    result = imestate.read()
+    print(json.dumps(result) if args.json else result["state"])
+    return 0
+
+
+def status() -> dict:
+    """What needs attention, as data. The panel reads this as JSON."""
+    dictionary = dictionary_path()
+    # Asked for as a pair: which packages are absent, and whether the question
+    # could be asked at all. A machine with no `omarchy` on PATH must not be
+    # told everything is installed, and must not be told everything is missing
+    # either - it has to be told the check did not run.
+    installed = packages.check()
+    return {
+        "packages_missing": installed["missing"],
+        "packages_error": installed["error"],
+        "dictionary": dictionary.is_file(),
+        "dictionary_path": str(dictionary),
+        # Which CC-CEDICT release is actually in use, from the record written
+        # when it was accepted: upstream's own version, date and entry count,
+        # and the sha256 of the bytes on disk. There is no release to pin to,
+        # so this is the answer to "what am I running" - and the thing anyone
+        # asking whether the dictionary changed has to be able to read.
+        "dictionary_release": assets.cached_release(cache_dir()),
+        # Whether the manifest lists anything, not whether the file exists. An
+        # empty manifest is what is left after an uninstall, and answering "yes,
+        # deployed" to that would hide the panel's first-run notice on exactly
+        # the machine that needs it.
+        "deployed": bool(deploy_lib.read_manifest(state_dir())),
+        "hook": hooks.installed(hooks_dir()),
+        # The two Hyprland pieces this plugin reports and never writes. Each is
+        # "on", "off" or "unknown"; none of the three is a failure, and
+        # "unknown" is what a machine with no hyprctl or a compositor that is
+        # not Hyprland honestly deserves.
+        "hypr": hyprland.report(),
+        "input": imestate.read(),
+    }
+
+
+def cmd_status(args) -> int:
+    result = status()
+    if args.json:
+        print(json.dumps(result))
+    else:
+        if result.get("packages_error"):
+            print(f"packages: could not check ({result['packages_error']})")
+        else:
+            print(f"packages missing: {', '.join(result['packages_missing']) or 'none'}")
+        print(f"dictionary: {'present' if result['dictionary'] else 'not downloaded'}")
+        print(f"dictionary path: {result['dictionary_path']}")
+        print("dictionary release: "
+              + assets.release_summary(result.get("dictionary_release")))
+        print(f"deployed: {'yes' if result['deployed'] else 'no'}")
+        print(f"theme hook: {'installed' if result['hook'] else 'not installed'}")
+        print(f"hyprland candidate blur: {result['hypr']['blur']}")
+        print(f"hyprland input method toggle: {result['hypr']['toggle']}")
+        print(f"input: {result['input']['state']}")
+    return 0
+
+
+def parse_value(text: str, key: str | None = None):
+    """Guess the type of a value handed over as text.
+
+    The panel passes everything as a string because QML has no way to say
+    "integer" on a command line, so `true` becomes a boolean and a run of digits
+    becomes an integer. Anything else stays a string, which is what the hotkey
+    setting wants. Nothing here decides whether the value is acceptable -
+    lib/settings.validate does that, so the CLI and a hand edit are judged by
+    the same rule.
+
+    A list-valued setting is the one case that cannot be guessed from the text:
+    a comma means nothing in a hotkey and everything in a schema selection. So
+    the key decides, and only when the settings module says that key holds a
+    list. An empty selection stays an empty list rather than becoming a list
+    holding one empty string, so that validate refuses it for the right reason.
+    """
+    declared = settings.DEFAULTS.get(key) if key is not None else None
+    if declared is not None and declared[1] is list:
+        return [item.strip() for item in text.split(",") if item.strip()]
+    lowered = text.strip().lower()
+    if lowered in ("true", "false"):
+        return lowered == "true"
+    stripped = text.strip()
+    if stripped.isdigit():
+        return int(stripped)
+    return text
+
+
+def parse_assignment(argument: str):
+    """Split one KEY=VALUE argument. The first `=` wins, so values may contain one."""
+    key, separator, value = argument.partition("=")
+    if not separator or not key:
+        raise ValueError(f"expected KEY=VALUE, got: {argument}")
+    return key.strip(), value
+
+
+def _print_settings(resolved: dict, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps(resolved))
+        return
+    for key, value in resolved.items():
+        printed = "true" if value is True else "false" if value is False else value
+        print(f"{key}={printed}")
+
+
+def cmd_settings(args) -> int:
+    if args.action == "get":
+        _print_settings(settings.load(shell_json()), args.json)
+        return 0
+    if not args.assignment:
+        print("ime-manager: settings set needs at least one KEY=VALUE", file=sys.stderr)
+        return 1
+    try:
+        values = dict(parse_assignment(argument) for argument in args.assignment)
+        resolved = settings.save(
+            shell_json(), {key: parse_value(value, key) for key, value in values.items()}
+        )
+    except ValueError as error:
+        print(f"ime-manager: {error}", file=sys.stderr)
+        return 1
+    _print_settings(resolved, args.json)
+    return 0
+
+
+def cmd_packages(args) -> int:
+    """List what is missing, or install it somewhere sudo can be answered.
+
+    The install has two homes and picks between them by asking whether this
+    process owns a terminal. Run by a person at a prompt it installs right
+    there, so pacman's output and sudo's prompt land where they are looking.
+    Run by the panel - a Quickshell `Process`, with no tty for sudo to prompt
+    on - it hands the work to a floating terminal instead, and says so rather
+    than reporting an install it cannot have watched.
+    """
+    checked = packages.check()
+    if checked["error"]:
+        print(f"ime-manager: could not check packages: {checked['error']}",
+              file=sys.stderr)
+        return 1
+    absent = checked["missing"]
+    if args.action == "list":
+        print("\n".join(absent) if absent else "none")
+        return 0
+    if not absent:
+        print("nothing to install")
+        return 0
+    if sys.stdin.isatty():
+        ok, detail = packages.install_here(absent)
+    else:
+        ok, detail = packages.install(absent)
+    if ok:
+        print(detail)
+        return 0
+    print(f"ime-manager: {detail}", file=sys.stderr)
+    return 1
+
+
+def cmd_schema(args) -> int:
+    """Read or change the Rime schema - what Rime's own F4 menu switches.
+
+    This is a different thing from `state`, which reports the Fcitx5 input
+    method. Inside Rime the schema decides whether a keystroke becomes pinyin,
+    romaji, or English, and until now it could only be reached through F4 on the
+    candidate window.
+    """
+    if args.action == "available":
+        # What the settings picker offers, which is a different question from
+        # what `list` answers: `list` reports the schemas Rime has built and can
+        # switch to right now, `available` reports the ones the settings could
+        # ask for. A schema only appears in `list` after a deploy has put it in
+        # schema_list and Rime has compiled it.
+        options = settings.catalogue(schema_display_name)
+        if args.json:
+            print(json.dumps(options))
+            return 0
+        for option in options:
+            suffix = "" if option["label"] == option["value"] else f"  {option['label']}"
+            print(f"{option['value']}{suffix}  ({option['description']})")
+        return 0
+
+    if args.action == "list":
+        described = imestate.describe_schemas(build_dir=rime_build_dir())
+        if args.json:
+            print(json.dumps(described))
+            return 0
+        if not described:
+            print(
+                "ime-manager: no schemas; is Fcitx5 running with the Rime addon?",
+                file=sys.stderr,
+            )
+            return 0
+        for entry in described:
+            mark = "*" if entry["current"] else " "
+            suffix = "" if entry["name"] == entry["id"] else f"  {entry['name']}"
+            print(f"{mark} {entry['id']}{suffix}")
+        return 0
+
+    if args.action == "get":
+        current = imestate.current_schema()
+        if current is None:
+            print("ime-manager: no current schema", file=sys.stderr)
+            return 1
+        print(current)
+        return 0
+
+    if not imestate.set_schema(args.schema):
+        print(f"ime-manager: could not switch to {args.schema}", file=sys.stderr)
+        return 1
+    print(args.schema)
+    return 0
+
+
+# The Fcitx5 addon that draws the candidate window. Reloading its configuration
+# is what makes it re-read the theme, and it is the lightest thing that does:
+# restarting Fcitx5 would repaint the window at the cost of every application's
+# input context.
+THEME_ADDON = "classicui"
+
+
+def theme_source(resolved: dict):
+    """A callable returning the candidate window's theme for these settings.
+
+    lib/theme.py is handed the settings rather than reading shell.json itself,
+    so that it stays a module about palettes and files. This is the one place
+    that knows both, and both entry points into rendering - a deploy and the
+    theme-switch hook - go through it, so the user's own background image
+    cannot reach one of them and not the other.
+    """
+    from lib import theme
+
+    return lambda: theme.resolve(settings=resolved)
+
+
+def theme_renderer():
+    """A callable returning the candidate window's theme, keyed by path.
+
+    lib/theme.py owns reading the Omarchy palette and Hyprland's corner radius
+    and turning them into files; it returns them under bare names, and they
+    install under the plugin's own directory inside the Fcitx5 themes target -
+    the same relative paths a deploy records. So nothing here can create a file
+    the manifest does not already cover and an uninstall would miss.
+    """
+    from lib import theme
+
+    source = theme_source(settings.load(shell_json()))
+
+    def render() -> dict:
+        return {
+            f"{theme.DIRECTORY}/{name}": text
+            for name, text in source()["files"].items()
+        }
+
+    return render
+
+
+def apply_theme(themes_dir, state_dir, renderer, reloader) -> dict:
+    """Rewrite the candidate window's theme and let Fcitx5 pick it up.
+
+    This is the whole job of Omarchy's theme-set hook, so it does as little as
+    it can: no dictionary download, no Rime rebuild, no package check. Files
+    that already say what they should say are left alone, and the reload is
+    skipped when nothing changed, so a theme switch that does not affect these
+    files costs nothing.
+
+    Nothing is written before the plugin has been deployed. Those files would
+    not be in the manifest, and an uninstall would leave them behind.
+    """
+    if not deploy_lib.read_manifest(state_dir):
+        return {
+            "written": [], "reloaded": False, "ok": True,
+            "detail": "nothing is deployed yet, so there is no theme to refresh",
+        }
+
+    written = []
+    for relative, content in sorted(renderer().items()):
+        destination = Path(themes_dir) / relative
+        if destination.is_file() and destination.read_text(encoding="utf-8") == content:
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        # The same rule the deploy writes under: a symlink at a destination is
+        # not followed. This path runs on every theme change, unattended, from
+        # a hook - which is the least supervised write the plugin makes.
+        deploy_lib.replace_symlink(destination)
+        destination.write_text(content, encoding="utf-8")
+        written.append(relative)
+
+    if not written:
+        return {
+            "written": [], "reloaded": False, "ok": True,
+            "detail": "theme: already current",
+        }
+
+    reloaded = reloader()
+    return {
+        "written": written, "reloaded": reloaded, "ok": reloaded,
+        "detail": f"theme: {len(written)} files rewritten"
+                  + ("" if reloaded else ", but Fcitx5 would not reload them"),
+    }
+
+
+def cmd_theme(_args) -> int:
+    try:
+        renderer = theme_renderer()
+    except Exception as error:
+        print(f"ime-manager: cannot generate the theme: {error}", file=sys.stderr)
+        return 1
+    result = apply_theme(
+        themes_dir(), state_dir(), renderer,
+        lambda: imestate.reload_addon(THEME_ADDON),
+    )
+    print(result["detail"])
+    return 0 if result["ok"] else 1
+
+
+def cmd_hook(args) -> int:
+    """Attach this plugin to Omarchy's theme-set hook, or detach it.
+
+    Installing is part of the plugin's lifecycle rather than a step in a README,
+    which is also why the hook is recorded in the install manifest: `uninstall`
+    takes it away with everything else.
+    """
+    directory = hooks_dir()
+    if args.action == "install":
+        installed = hooks.install(directory, PLUGIN_DIR / "ime-manager", state_dir())
+        print(f"installed: {installed}")
+        return 0
+    if args.action == "remove":
+        print("removed" if hooks.remove(directory, state_dir())
+              else "no hook was installed")
+        return 0
+    print("installed" if hooks.installed(directory) else "not installed")
+    return 0
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(prog="ime-manager", description=__doc__)
+    parser.add_argument("--version", action="version", version=VERSION)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sub.add_parser("deploy", help="generate and install the configuration").set_defaults(
+        handler=cmd_deploy
+    )
+    uninstall = sub.add_parser(
+        "uninstall", help="remove everything this plugin installed")
+    uninstall.add_argument(
+        "--keep-cache", action="store_true",
+        help="leave the downloaded sources and dictionary in place",
+    )
+    uninstall.set_defaults(handler=cmd_uninstall)
+
+    state = sub.add_parser("state", help="report the live input state")
+    state.add_argument("--json", action="store_true")
+    state.set_defaults(handler=cmd_state)
+
+    status = sub.add_parser("status", help="report what needs attention")
+    status.add_argument("--json", action="store_true")
+    status.set_defaults(handler=cmd_status)
+
+    setting = sub.add_parser("settings", help="read or change this widget's settings")
+    setting.add_argument("action", choices=["get", "set"])
+    setting.add_argument(
+        "assignment", nargs="*", metavar="KEY=VALUE",
+        help="settings to write, e.g. schemas=rime_ice,bopomofo pageSize=5 (set only)",
+    )
+    setting.add_argument("--json", action="store_true")
+    setting.set_defaults(handler=cmd_settings)
+
+    pkg = sub.add_parser("packages", help="inspect or install required packages")
+    pkg.add_argument("action", choices=["list", "install"])
+    pkg.set_defaults(handler=cmd_packages)
+
+    schema = sub.add_parser("schema", help="read or change the Rime schema")
+    schema.add_argument("action", choices=["available", "list", "get", "set"])
+    schema.add_argument("schema", nargs="?", metavar="ID",
+                        help="the schema to switch to (set only)")
+    schema.add_argument("--json", action="store_true")
+    schema.set_defaults(handler=cmd_schema)
+
+    theme = sub.add_parser("theme", help="follow the Omarchy theme")
+    theme.add_argument("action", choices=["apply"])
+    theme.set_defaults(handler=cmd_theme)
+
+    hook = sub.add_parser("hook", help="attach to Omarchy's theme-set hook")
+    hook.add_argument("action", choices=["install", "remove", "status"])
+    hook.set_defaults(handler=cmd_hook)
+
+    args = parser.parse_args(argv)
+    if args.command == "schema" and args.action == "set" and not args.schema:
+        parser.error("schema set needs a schema id")
+    return args.handler(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

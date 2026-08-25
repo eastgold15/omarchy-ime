@@ -1,0 +1,273 @@
+# japanese_tw_eng.schema.yaml
+#
+# A schema composed for the ryuhzk.ime Omarchy plugin. It is not upstream's
+# file, and it is not a copy of one: it is snomiao's sno_jpn_wubi86_eng schema
+# with the wubi and emoji components dropped and rime_ice put in place of its
+# pinyin. Most of the lookup, filter and reverse-lookup blocks below are that
+# schema's, unchanged - including the comment_format chain under
+# translate_en2jp_reverse_lookup.
+#
+# Upstream: https://github.com/snomiao/rime-snomiao
+#           Rime/sno_jpn_wubi86_eng.schema.yaml
+#           at revision a2f3e7c7505abe567ec282ce61f754885c413e88
+#
+# That repository ships no LICENSE file. Its package.json declares `"license":
+# "ISC"` and publishes this Rime directory to npm. See NOTICE in this
+# repository for what that does and does not establish.
+
+schema:
+  schema_id: japanese_tw_eng
+  name: Mixed ZH-JA-EN
+  version: "2.1.0"
+  author:
+    - ensigma96 <ensigma96@gmail.com>
+    - snomiao <snomiao@gmail.com>
+  description: |
+    Mixed Pinyin, Romaji, and English input with reverse lookup.
+    Composed for the ryuhzk.ime Omarchy plugin from snomiao's
+    sno_jpn_wubi86_eng schema (github.com/snomiao/rime-snomiao).
+  dependencies:
+    - japanese_pinyin
+    - rime_ice
+    - melt_eng
+    - translate_en2jp
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [中文, 西文]
+  - name: ascii_punct
+    states: [。，, ．，]
+  - name: simplification
+    reset: 0
+    states: [漢字, 汉字]
+  - name: hiragana_katakana
+    reset: 0
+    states: [平假名, 片假名]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - affix_segmentor@translate_en2jp_lookup
+    - affix_segmentor@japanese_lookup
+    - affix_segmentor@pinyin_simp_lookup
+    - affix_segmentor@japanese_pinyin_lookup
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - script_translator
+    - table_translator@japanese_lookup
+    - script_translator@pinyin_simp_lookup
+    - script_translator@japanese_pinyin_lookup
+    - table_translator@melt_eng
+    - table_translator@cn_en
+    - table_translator@translate_en2jp_lookup
+  filters:
+    - simplifier
+    - simplifier@s2tw_converter
+    - simplifier@emoji
+    - simplifier@zhjp_translate_suggestion
+    - simplifier@jpzh_translate_suggestion
+    - simplifier@hiragana_katakana_converter
+    - uniquifier
+    - reverse_lookup_filter@japanese_reverse_lookup
+    - reverse_lookup_filter@translate_en2jp_reverse_lookup
+    - reverse_lookup_filter@pinyin_simp_reverse_lookup
+
+abc_segmentor:
+  extra_tags:
+    - translate_en2jp_lookup
+    - japanese_lookup
+    - pinyin_simp_lookup
+    - japanese_pinyin_lookup
+
+speller:
+  alphabet: "zyxwvutsrqponmlkjihgfedcba-_"
+  delimiter: " '"
+  algebra:
+    - derive/_/x/
+    - derive/-/q/
+    - derive/i_e/ye/
+    - derive/tu/tsu/
+    - derive/si/shi/
+
+translator:
+  dictionary: rime_ice
+  prism: rime_ice
+  enable_word_completion: true
+  initial_quality: 1.2
+  preedit_format:
+    - xform/([jqxy])v/$1u/
+    - xform/([nl])ue/$1ve/
+
+japanese_lookup:
+  dictionary: japanese
+  enable_completion: false
+  spelling_hints: 5
+  comment_format:
+    - "xlit|q|ー|"
+  preedit_format:
+    - "xlit|q|ー|"
+
+japanese_pinyin_lookup:
+  tag: japanese_pinyin_lookup
+  prefix: P
+  enable_completion: false
+  dictionary: japanese_pinyin
+  prism: japanese_pinyin
+  tips: 〔拼音和字〕
+  preedit_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+
+translate_en2jp_lookup:
+  tag: translate_en2jp_lookup
+  dictionary: translate_en2jp
+  enable_completion: false
+  prism: translate_en2jp
+  prefix: J
+  suffix: "`"
+  tips: 〔English to Japanese〕
+
+pinyin_simp_lookup:
+  tag: pinyin_simp_lookup
+  prefix: T
+  suffix: "`"
+  enable_completion: true
+  dictionary: rime_ice
+  prism: rime_ice
+  tips: 〔Rime Ice Pinyin〕
+  preedit_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+  comment_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+
+melt_eng:
+  dictionary: melt_eng
+  enable_sentence: false
+  enable_user_dict: false
+  initial_quality: 1.1
+  comment_format:
+    - xform/.*//
+
+cn_en:
+  dictionary: ""
+  user_dict: en_dicts/cn_en
+  db_class: stabledb
+  enable_completion: true
+  enable_sentence: false
+  initial_quality: 0.5
+  comment_format:
+    - xform/^.+$//
+
+recognizer:
+  import_preset: default
+  patterns:
+    japanese_pinyin_lookup: "^P[a-z;/,.]*`?$"
+    pinyin_simp_lookup: "^T[a-z;/,.]*`?$"
+    punct: "^/([0-9]+[a-z]*|[a-z]+)$"
+    translate_en2jp_lookup: "^J[a-z;/,.]*`?$"
+    expression: "^=.*$"
+
+s2tw_converter:
+  opencc_config: s2twp.json
+  tags: [pinyin_simp_lookup]
+  tips: none
+
+emoji:
+  option_name: emoji
+  opencc_config: emoji.json
+  inherit_comment: false
+
+zhjp_translate_suggestion:
+  option_name: zhjp_translate_suggestion
+  opencc_config: zhjp.json
+  tags:
+    - pinyin_simp_lookup
+    - japanese_pinyin_lookup
+  tips: none
+
+jpzh_translate_suggestion:
+  option_name: jpzh_translate_suggestion
+  opencc_config: jpzh.json
+  tags: [japanese_lookup]
+  show_in_comment: true
+  tips: none
+
+hiragana_katakana_converter:
+  option_name: hiragana_katakana
+  opencc_config: hiragana_katakana.json
+  tags: [japanese_lookup]
+  tips: none
+
+japanese_reverse_lookup:
+  tags:
+    - translate_en2jp_lookup
+    - pinyin_simp_lookup
+    - japanese_pinyin_lookup
+  spelling_hints: 2
+  dictionary: japanese
+
+translate_en2jp_reverse_lookup:
+  tags: [translate_en2jp_lookup]
+  spelling_hints: 3
+  dictionary: translate_en2jp
+  comment_format:
+    - "xform/^/ /"
+    - "xform/(.{80}.+)/$1--/"
+    - "xform/([a-z])-[a-z]+/$1/"
+    - "xform/ (\\S\\S\\S\\S)\\S\\S+(?=.*?--$)/ $1-/"
+    - "xform/^(.*)--$/$1/"
+    - "xform/ ([a-z]+)((?:-[a-z]+)*) \\1([a-z]+)/ $1$2-$3/"
+    - "xform/ ([a-z]+)((?:-[a-z]+)*) \\1([a-z]+)/ $1$2-$3/"
+    - "xform/ ([a-z]+)((?:-[a-z]+)*) \\1([a-z]+)/ $1$2-$3/"
+    - "xform/ ([a-z]+)((?:-[a-z]+)*) \\1([a-z]+)/ $1$2-$3/"
+    - "xform/ ([a-z]+)((?:-[a-z]+)*) \\1([a-z]+)/ $1$2-$3/"
+    - "xform/ (\\S+)( \\1)+/ $1/"
+    - "xform/ (.{40}).+/$1…/"
+    - "xform/^\\s*//"
+    - "xform/\\s*$//"
+
+pinyin_simp_reverse_lookup:
+  tags: [pinyin_simp_lookup]
+  spelling_hints: 3
+  dictionary: rime_ice
+  comment_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+  bindings:
+    - { accept: "Control+Shift+1", toggle: ascii_mode, when: always }
+    - { accept: "Control+Shift+3", toggle: ascii_punct, when: always }
+    - { accept: "Control+Shift+4", toggle: simplification, when: always }
+    - { accept: "Control+Shift+5", toggle: hiragana_katakana, when: always }
+
+editor:
+  bindings:
+    Shift_R: commit_comment
+
+menu:
+  page_size: 10

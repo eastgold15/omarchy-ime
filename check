@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Run every check this repository knows how to run.
+set -euo pipefail
+cd "$(dirname "$0")"
+python3 -m unittest discover -s tests -t . -v
+echo "All checks passed."
