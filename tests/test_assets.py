@@ -339,6 +339,57 @@ class DownloadTests(unittest.TestCase):
         # Stopped near the cap, not after draining the response.
         self.assertLess(self.served, 4096 + assets.READ_CHUNK + 1)
 
+    def test_a_drip_fed_response_is_given_up_on(self):
+        # Two bytes per read and a clock that says ten seconds passed each
+        # time: the per-read socket timeout never fires, so only a
+        # whole-transfer deadline can end this. Two rather than one because
+        # gzip asks for its two magic bytes in a single read, as a real
+        # HTTPResponse would deliver them; a one-byte short read would be
+        # refused as "not gzip" before the deadline ever got a look.
+        blob = gzipped(cedict())
+        clock = {"now": 1000.0}
+
+        class Drip(io.BytesIO):
+            def read(inner, size=-1):
+                clock["now"] += 10.0
+                chunk = io.BytesIO.read(inner, min(2, size if size > 0 else 2))
+                self.served += len(chunk)
+                return chunk
+
+        self.served = 0
+        with mock.patch.object(assets, "DOWNLOAD_DEADLINE", 30):
+            with self.assertRaises(assets.AssetRejected) as caught:
+                assets.download(assets.dictionary_url(),
+                                str(self.tmp / "out" / "cedict.txt"),
+                                open_url=lambda url, timeout=None: Drip(blob),
+                                clock=lambda: clock["now"])
+        self.assertIn("30", str(caught.exception))
+        # Gave up after a few reads, not after draining the whole response.
+        self.assertLess(self.served, 16)
+        self.assertLess(self.served, len(blob))
+
+    def test_the_deadline_is_a_whole_transfer_bound_not_an_idle_one(self):
+        self.assertLess(assets.DOWNLOAD_TIMEOUT, assets.DOWNLOAD_DEADLINE)
+
+    def test_a_symlink_standing_at_the_destination_is_not_followed(self):
+        victim = self.tmp / "victim"
+        victim.write_bytes(b"precious")
+        destination = self.tmp / "out" / "cedict.txt.part"
+        destination.parent.mkdir()
+        destination.symlink_to(victim)
+        with self.assertRaises(assets.AssetRejected):
+            self._download(gzipped(cedict()), destination)
+        self.assertEqual(victim.read_bytes(), b"precious")
+        self.assertTrue(destination.is_symlink(), "the link was not replaced")
+
+    def test_an_existing_file_at_the_destination_is_not_truncated(self):
+        destination = self.tmp / "out" / "cedict.txt.part"
+        destination.parent.mkdir()
+        destination.write_bytes(b"someone else's download")
+        with self.assertRaises(assets.AssetRejected):
+            self._download(gzipped(cedict()), destination)
+        self.assertEqual(destination.read_bytes(), b"someone else's download")
+
     def test_a_gzip_bomb_is_refused(self):
         bomb = gzipped("\0" * (8 << 20))
         self.assertLess(len(bomb), 1 << 16, "the bomb must really be a bomb")
@@ -541,6 +592,25 @@ class EnsureDictionaryTests(unittest.TestCase):
         marker = assets.dictionary_path(self.cache).parent / assets.COMPLETE_MARKER
         old = time.time() - days * 86400
         os.utime(marker, (old, old))
+
+    def test_the_pending_name_cannot_be_worked_out_in_advance(self):
+        # A name derived from the pid is a name another process can plant a
+        # link at before the download starts. Two attempts must land at two
+        # names, and neither may carry the pid.
+        def refusing_fetcher(url, destination):
+            self.calls.append((url, destination))
+            raise assets.AssetRejected("not today")
+
+        self._ensure(refusing_fetcher)
+        self._ensure(refusing_fetcher)
+        names = [Path(destination).name for _, destination in self.calls]
+        self.assertEqual(len(names), 2)
+        self.assertNotEqual(names[0], names[1])
+        for name in names:
+            self.assertNotIn(str(os.getpid()), name)
+            self.assertTrue(name.endswith(".part"), name)
+            self.assertEqual(Path(self.calls[0][1]).parent,
+                             assets.dictionary_path(self.cache).parent)
 
     def test_a_download_lands_at_the_resolved_path(self):
         path = self._ensure()

@@ -27,6 +27,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import time
@@ -130,8 +131,16 @@ MAX_DECOMPRESSED_BYTES = 96 * 1024 * 1024
 READ_CHUNK = 64 * 1024
 WRITE_CHUNK = 256 * 1024
 
-# How long the download may take before it is given up on.
+# Two clocks, because one is not enough. DOWNLOAD_TIMEOUT is what urllib is
+# given, and urllib applies it per socket operation: it fires when the server
+# goes quiet, and never while the server keeps sending. A server that sends one
+# byte every few seconds keeps every read comfortably inside it and holds the
+# deploy open for as long as it likes. DOWNLOAD_DEADLINE is the bound on the
+# whole transfer, checked before every read, so the worst case is the deadline
+# plus one idle timeout. The real file is under 4 MB and arrives in seconds;
+# five minutes is not a budget anyone will notice from the wrong side.
 DOWNLOAD_TIMEOUT = 60
+DOWNLOAD_DEADLINE = 300
 
 # --- what the file has to look like before it is believed --------------------
 #
@@ -398,9 +407,13 @@ class _BoundedReader:
     looked like a successful download would be the worse outcome.
     """
 
-    def __init__(self, response, limit: int):
+    def __init__(self, response, limit: int, deadline: float | None = None,
+                 clock=time.monotonic):
         self._response = response
         self._limit = limit
+        self._clock = clock
+        self._deadline = None if deadline is None else clock() + deadline
+        self._budget = deadline
         self.read_bytes = 0
 
     def read(self, size: int = -1) -> bytes:
@@ -408,6 +421,14 @@ class _BoundedReader:
         # exists to prevent, so it becomes one chunk instead.
         if size is None or size < 0 or size > READ_CHUNK:
             size = READ_CHUNK
+        # Checked before the read rather than after: a read that blocks is
+        # bounded by the socket timeout, and the check has to come around
+        # again before the next one can start.
+        if self._deadline is not None and self._clock() > self._deadline:
+            raise AssetRejected(
+                f"the download did not finish within {self._budget} seconds;"
+                " a response that arrives this slowly is not one worth waiting for"
+            )
         chunk = self._response.read(size)
         self.read_bytes += len(chunk)
         if self.read_bytes > self._limit:
@@ -418,7 +439,35 @@ class _BoundedReader:
         return chunk
 
 
-def download(url: str, destination: str, open_url=_open_https) -> None:
+def _create_exclusively(path: Path):
+    """Open `path` for writing only if nothing stands there yet.
+
+    A plain `open(path, "wb")` follows a symlink standing at `path` and
+    truncates whatever it points to. The download's destination is a file
+    nothing has written yet, so the only honest way to open it is to insist on
+    creating it: O_EXCL refuses an existing file, and refuses a symlink whether
+    or not its target exists, and O_NOFOLLOW is belt to that brace. The name is
+    already unguessable - `ensure_dictionary` draws it fresh each time - so this
+    is the guard for the case where the guess was somehow right.
+    """
+    try:
+        descriptor = os.open(
+            path,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            0o644,
+        )
+    except FileExistsError as error:
+        raise AssetRejected(
+            f"something already stands where the download would land ({path.name});"
+            " nothing was written over it"
+        ) from error
+    except OSError as error:
+        raise AssetRejected(f"cannot create {path.name}: {error}") from error
+    return os.fdopen(descriptor, "wb")
+
+
+def download(url: str, destination: str, open_url=_open_https,
+             clock=time.monotonic) -> None:
     """Download the published gzip and write it out decompressed.
 
     Decompressing is not a modification of the data: it is the same bytes the
@@ -441,8 +490,9 @@ def download(url: str, destination: str, open_url=_open_https) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     written = 0
     with open_url(url) as response:
-        reader = _BoundedReader(response, MAX_COMPRESSED_BYTES)
-        with open(destination, "wb") as handle:
+        reader = _BoundedReader(response, MAX_COMPRESSED_BYTES,
+                                deadline=DOWNLOAD_DEADLINE, clock=clock)
+        with _create_exclusively(destination) as handle:
             with gzip.GzipFile(fileobj=reader, mode="rb") as stream:
                 while True:
                     try:
@@ -699,9 +749,14 @@ def ensure_dictionary(cache_root: Path, fetcher=download, notice=None) -> Path |
         shutil.rmtree(target.parent, ignore_errors=True)
     target.parent.mkdir(parents=True, exist_ok=True)
     # Beside the target, because `os.replace` is atomic only within one
-    # filesystem; named by pid so two deploys at once cannot write over each
-    # other's half-finished download.
-    pending = target.with_name(f"{target.name}.{os.getpid()}.part")
+    # filesystem. The name is drawn fresh rather than derived from the pid: a
+    # pid is public, so a name built from it is a name another process can
+    # plant a symlink at before the download starts, and the write would then
+    # go wherever the link pointed. Sixteen random hex digits also keep two
+    # deploys at once out of each other's half-finished file, which is all the
+    # pid was ever for. `download` refuses to open a name that already exists,
+    # so even a correct guess costs the guesser nothing but a refused deploy.
+    pending = target.with_name(f"{target.name}.{secrets.token_hex(8)}.part")
     try:
         fetcher(dictionary_url(), str(pending))
         if not pending.is_file():
