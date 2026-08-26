@@ -1,7 +1,6 @@
 # Extension mechanism — design
 
-**Status:** design, v0.2. Local only. Nothing here is published until it is
-built, tested against a real deploy, and reviewed.
+**Status:** deferred. Written 2026-08-26, then set aside: every planned extension is first-party, so an external mechanism solves a problem nobody has yet. Revisit when a third party asks to add something. The internal feature declaration in `lib/features.py` is the seed this would grow from.
 
 **Supersedes nothing.** v0.1.0 (one plugin, everything built in) stays as it is
 and is what the marketplace is reviewing. This is the shape of v0.2.
