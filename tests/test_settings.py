@@ -615,5 +615,34 @@ class BackgroundImageWriteTests(SaveTests):
         self.assertEqual(settings.load(self.path)["backgroundImageLight"], "")
 
 
+class AnnotationSwitchTests(unittest.TestCase):
+    """One boolean over the whole annotation feature, off until asked for."""
+
+    def test_annotation_is_off_by_default(self):
+        self.assertIs(settings.resolve({})["annotation"], False)
+        self.assertIs(settings.DEFAULTS["annotation"][0], False)
+
+    def test_it_is_a_boolean(self):
+        self.assertIs(settings.DEFAULTS["annotation"][1], bool)
+        self.assertIs(settings.validate("annotation", True), True)
+        with self.assertRaises(ValueError):
+            settings.validate("annotation", "yes")
+
+    def test_a_wrong_type_falls_back_to_off(self):
+        self.assertIs(settings.resolve({"annotation": "on"})["annotation"], False)
+        self.assertIs(settings.resolve({"annotation": 1})["annotation"], False)
+
+    def test_the_gloss_settings_keep_their_values_while_it_is_off(self):
+        # Turning the feature off is not forgetting how it was configured.
+        resolved = settings.resolve({
+            "annotation": False, "annotateChinese": False,
+            "annotateShowPinyin": True, "annotateHotkey": "Control+g",
+        })
+        self.assertIs(resolved["annotateChinese"], False)
+        self.assertIs(resolved["annotateEnglish"], True)
+        self.assertIs(resolved["annotateShowPinyin"], True)
+        self.assertEqual(resolved["annotateHotkey"], "Control+g")
+
+
 if __name__ == "__main__":
     unittest.main()

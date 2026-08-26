@@ -82,6 +82,11 @@ class DeployCase(unittest.TestCase):
         return self.clones / name
 
     def _deploy(self, **overrides):
+        # The fixture deploys with annotation on unless a test says otherwise:
+        # most of what is asserted here is about the files the feature writes,
+        # and the switch defaults to off. The default itself is asserted by
+        # AnnotationSwitchDeployTests, which calls deploy.deploy directly.
+        overrides.setdefault("annotation", True)
         return deploy.deploy(
             settings.resolve(overrides), self.targets, self.state, self.payload,
             asset_provider=self.provider, theme_source=self.theme,
@@ -644,8 +649,13 @@ class ActiveGroupTests(unittest.TestCase):
 
     def test_unconditional_groups_are_always_present(self):
         groups = deploy.active_groups(settings.resolve({}))
-        self.assertIn("rime", groups)
         self.assertIn("fcitx5", groups)
+
+    def test_the_annotation_group_follows_its_switch(self):
+        # `rime` holds the annotation filter and nothing else, so it is the
+        # annotation feature's group rather than an unconditional one.
+        self.assertNotIn("rime", deploy.active_groups(settings.resolve({})))
+        self.assertIn("rime", deploy.active_groups(settings.resolve({"annotation": True})))
 
     def test_no_payload_group_ships_a_theme_any_more(self):
         # The candidate window's theme is generated, not shipped.
@@ -656,7 +666,7 @@ class ActiveGroupTests(unittest.TestCase):
 class DictionaryDeployTests(DeployCase):
     def test_the_generated_schema_carries_the_dictionary_path_it_was_given(self):
         deploy.deploy(
-            settings.resolve({}), self.targets, self.state, self.payload,
+            settings.resolve({"annotation": True}), self.targets, self.state, self.payload,
             asset_provider=self.provider,
             dictionary_path="/cache/omarchy-ime/dictionary/v0-test/cedict.txt",
         )
@@ -692,6 +702,9 @@ class ResolveDictionaryTests(unittest.TestCase):
         path.write_bytes(cedict().encode("utf-8"))
 
     def _resolve(self, **overrides):
+        # With the master switch on, unless a test says otherwise; the switch
+        # itself is exercised by AnnotationSwitchDictionaryTests.
+        overrides.setdefault("annotation", True)
         return deploy.resolve_dictionary(
             settings.resolve(overrides), self.cache, fetcher=self._fetcher
         )
@@ -717,13 +730,13 @@ class ResolveDictionaryTests(unittest.TestCase):
         def failing(url, destination):
             raise OSError("network down")
 
-        path = deploy.resolve_dictionary(settings.resolve({}), self.cache, fetcher=failing)
+        path = deploy.resolve_dictionary(settings.resolve({"annotation": True}), self.cache, fetcher=failing)
         self.assertEqual(path, assets.dictionary_path(self.cache))
         self.assertFalse(path.exists())
 
     def test_what_arrived_is_reported_rather_than_swapped_in_silently(self):
         notices = []
-        deploy.resolve_dictionary(settings.resolve({}), self.cache,
+        deploy.resolve_dictionary(settings.resolve({"annotation": True}), self.cache,
                                   fetcher=self._fetcher, notice=notices.append)
         self.assertTrue(any("2026-08-25T08:12:38Z" in line for line in notices),
                         notices)
@@ -735,7 +748,7 @@ class ResolveDictionaryTests(unittest.TestCase):
             path.write_text("<html>503 Service Unavailable</html>", encoding="utf-8")
 
         notices = []
-        deploy.resolve_dictionary(settings.resolve({}), self.cache,
+        deploy.resolve_dictionary(settings.resolve({"annotation": True}), self.cache,
                                   fetcher=hostile, notice=notices.append)
         self.assertTrue(any(line.startswith(deploy.WARNING) for line in notices),
                         notices)
@@ -752,7 +765,7 @@ class ResolveDictionaryTests(unittest.TestCase):
         def failing(url, destination):
             raise OSError("network down")
 
-        resolved = settings.resolve({})
+        resolved = settings.resolve({"annotation": True})
         path = deploy.resolve_dictionary(resolved, self.cache, fetcher=failing)
         rendered = generate.render(resolved, path)["rime_ice.custom.yaml"]
         self.assertIn("annotate/dictionary", rendered)
@@ -1218,6 +1231,208 @@ class RedeployEvidenceTests(RedeployCase):
     def test_a_quiet_readable_journal_is_still_verified(self):
         result = self._redeploy(FakeRunner(journal=BUILD_SUCCESS_JOURNAL))
         self.assertTrue(result["verified"])
+
+
+# What the annotation feature writes into a schema file and nothing else does:
+# its filter registration, its switch, its hotkey binding, and the `annotate/*`
+# keys the filter reads. Every line a deploy with the feature off drops, and
+# every line it adds back when the feature returns, has to be one of these.
+ANNOTATION_LINE_HEADS = (
+    '  "engine/filters/+":',
+    '    - "lua_filter@*annotate"',
+    "  switches/+:",
+    "    - { name: annotate,",
+    "  key_binder/bindings/+:",
+    "    - { accept: ",
+    "  annotate/",
+)
+
+
+def _annotation_line(line: str) -> bool:
+    return any(line.startswith(head) for head in ANNOTATION_LINE_HEADS)
+
+
+class AnnotationSwitchDeployTests(DeployCase):
+    """`annotation: false` leaves nothing of the feature on disk.
+
+    Every assertion here reads the sandbox tree back: which files exist, what
+    they say, and what the manifest lists. Nothing asks the plugin what it
+    thinks it installed.
+    """
+
+    ALL_CHINESE = list(settings.CHINESE_SCHEMAS)
+
+    def _rime_files(self) -> dict[str, str]:
+        return {
+            str(path.relative_to(self.rime)): path.read_text(encoding="utf-8")
+            for path in sorted(self.rime.rglob("*")) if path.is_file()
+        }
+
+    def test_a_fresh_install_installs_no_filter_at_all(self):
+        # deploy.deploy called directly, with nothing but the defaults: this is
+        # what a machine that has never seen the settings gets.
+        deploy.deploy(settings.resolve({}), self.targets, self.state, self.payload,
+                      asset_provider=self.provider, theme_source=self.theme)
+        self.assertFalse((self.rime / "lua" / "annotate.lua").exists())
+        self.assertFalse((self.rime / "lua").exists())
+        self.assertNotIn("lua/annotate.lua", self._manifest().get("rime", {}))
+        for relative, text in self._rime_files().items():
+            self.assertNotIn("annotate", text, relative)
+
+    def test_the_filter_is_installed_while_the_switch_is_on(self):
+        self._deploy(annotation=True)
+        self.assertTrue((self.rime / "lua" / "annotate.lua").is_file())
+        self.assertIn("lua/annotate.lua", self._manifest()["rime"])
+
+    def test_turning_it_off_removes_the_filter_a_previous_deploy_installed(self):
+        self._deploy(annotation=True)
+        self.assertTrue((self.rime / "lua" / "annotate.lua").is_file())
+        self._deploy(annotation=False)
+        self.assertFalse((self.rime / "lua" / "annotate.lua").exists())
+        # The directory the filter lived in goes with it: left behind it is
+        # litter nothing else uses.
+        self.assertFalse((self.rime / "lua").exists())
+        self.assertNotIn("lua/annotate.lua", self._manifest().get("rime", {}))
+
+    def test_turning_it_back_on_brings_the_filter_back(self):
+        self._deploy(annotation=True)
+        self._deploy(annotation=False)
+        self._deploy(annotation=True)
+        self.assertTrue((self.rime / "lua" / "annotate.lua").is_file())
+        self.assertIn("lua/annotate.lua", self._manifest()["rime"])
+
+    def test_off_writes_no_annotation_key_into_any_schema_file(self):
+        self._deploy(annotation=False, schemas=self.ALL_CHINESE)
+        files = self._rime_files()
+        self.assertIn("default.custom.yaml", files)
+        for relative, text in files.items():
+            with self.subTest(file=relative):
+                self.assertNotIn("annotate", text)
+                self.assertNotIn("lua_filter", text)
+                self.assertNotIn("key_binder", text)
+                self.assertNotIn("switches", text)
+
+    def test_the_directions_change_nothing_while_it_is_off(self):
+        self._deploy(annotation=False, schemas=self.ALL_CHINESE,
+                     annotateChinese=True, annotateEnglish=True,
+                     annotateShowPinyin=True, annotateHotkey="Control+g")
+        for relative, text in self._rime_files().items():
+            self.assertNotIn("annotate", text, relative)
+            self.assertNotIn("Control+g", text, relative)
+
+    def test_the_only_difference_between_on_and_off_is_the_annotation_block(self):
+        self._deploy(annotation=True, schemas=self.ALL_CHINESE)
+        on = self._rime_files()
+        self._deploy(annotation=False, schemas=self.ALL_CHINESE)
+        off = self._rime_files()
+
+        # Off never has a file on lacks, and the filter itself is gone.
+        self.assertEqual(set(off) - set(on), set())
+        self.assertIn("lua/annotate.lua", on)
+        self.assertNotIn("lua/annotate.lua", off)
+
+        seen_heads = set()
+        for relative in sorted(set(on) - {"lua/annotate.lua"}):
+            with self.subTest(file=relative):
+                on_lines = on[relative].splitlines()
+                if relative in off:
+                    off_lines = off[relative].splitlines()
+                    # Nothing is added by turning the feature off...
+                    self.assertEqual([line for line in off_lines
+                                      if line not in on_lines], [])
+                    removed = [line for line in on_lines if line not in off_lines]
+                else:
+                    # ...and a schema file that vanished entirely held nothing
+                    # but the header, `patch:` and the block.
+                    removed = [line for line in on_lines
+                               if line and not line.startswith("#")
+                               and line != "patch:"]
+                    self.assertTrue(removed, relative)
+                for line in removed:
+                    self.assertTrue(_annotation_line(line), line)
+                    seen_heads.update(
+                        head for head in ANNOTATION_LINE_HEADS if line.startswith(head)
+                    )
+        # And every part of the block was actually seen going, not just some.
+        self.assertEqual(seen_heads, set(ANNOTATION_LINE_HEADS))
+
+    def test_default_custom_yaml_is_identical_either_way(self):
+        # The switch owns the per-schema files. schema_list, page size and the
+        # traditionalize patch are not its business.
+        self._deploy(annotation=True, schemas=self.ALL_CHINESE)
+        on = (self.rime / "default.custom.yaml").read_text(encoding="utf-8")
+        self._deploy(annotation=False, schemas=self.ALL_CHINESE)
+        off = (self.rime / "default.custom.yaml").read_text(encoding="utf-8")
+        self.assertEqual(on, off)
+
+    def test_the_japanese_feature_is_not_touched_by_the_switch(self):
+        self._deploy(annotation=False, schemas=JAPANESE)
+        self.assertTrue((self.rime / "japanese.dict.yaml").is_file())
+        self.assertTrue((self.rime / "japanese.jmdict.dict.yaml").is_file())
+        self.assertIn("japanese_tw_eng", (self.rime / "default.custom.yaml").read_text())
+
+
+class AnnotationSwitchDictionaryTests(unittest.TestCase):
+    """The dictionary is fetched only for a feature that is on."""
+
+    def setUp(self):
+        self._tmp = TemporaryDirectory()
+        self.cache = Path(self._tmp.name)
+        self.calls = []
+        self.notices = []
+        self.addCleanup(self._tmp.cleanup)
+        floor = mock.patch.object(assets, "MIN_ENTRIES", 1)
+        floor.start()
+        self.addCleanup(floor.stop)
+
+    def _fetcher(self, url, destination):
+        self.calls.append(url)
+        path = Path(destination)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(cedict().encode("utf-8"))
+
+    def _resolve(self, **overrides):
+        return deploy.resolve_dictionary(
+            settings.resolve(overrides), self.cache, fetcher=self._fetcher,
+            notice=self.notices.append,
+        )
+
+    def test_a_fresh_install_downloads_nothing(self):
+        path = self._resolve()
+        self.assertEqual(self.calls, [])
+        self.assertFalse(path.exists())
+        self.assertEqual(self.notices, [])
+
+    def test_off_downloads_nothing_even_with_both_directions_on(self):
+        path = self._resolve(annotation=False, annotateChinese=True, annotateEnglish=True)
+        self.assertEqual(self.calls, [])
+        self.assertFalse(path.exists())
+        self.assertFalse(self.cache.joinpath("dictionary").exists())
+
+    def test_on_downloads_it(self):
+        self.assertTrue(self._resolve(annotation=True).is_file())
+        self.assertEqual(self.calls, [assets.dictionary_url()])
+
+    def test_off_leaves_a_cached_dictionary_exactly_where_it_was(self):
+        # Cache, not configuration: turning the feature off must not cost the
+        # user the download when they turn it back on.
+        cached = self._resolve(annotation=True)
+        marker = cached.parent / assets.COMPLETE_MARKER
+        before = (cached.read_bytes(), cached.stat().st_mtime_ns,
+                  marker.read_bytes())
+        self.calls.clear()
+        path = self._resolve(annotation=False)
+        self.assertEqual(path, cached)
+        self.assertTrue(cached.is_file())
+        self.assertEqual(
+            (cached.read_bytes(), cached.stat().st_mtime_ns, marker.read_bytes()),
+            before,
+        )
+        self.assertEqual(self.calls, [])
+
+    def test_the_path_is_still_the_one_the_schema_would_name(self):
+        self.assertEqual(self._resolve(annotation=False),
+                         assets.dictionary_path(self.cache))
 
 
 if __name__ == "__main__":

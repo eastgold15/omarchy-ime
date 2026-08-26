@@ -22,6 +22,7 @@
       "schemas": [
         "rime_ice"
       ],
+      "annotation": false,
       "annotateChinese": true,
       "annotateEnglish": true,
       "annotateShowPinyin": false,
@@ -139,6 +140,13 @@
             "description": "Japanese"
           }
         ]
+      },
+      {
+        "key": "annotation",
+        "type": "boolean",
+        "label": "Candidate annotation",
+        "defaultValue": false,
+        "description": "Glosses beside the candidates, read from CC-CEDICT: an English meaning on a Chinese candidate, a Chinese meaning on an English one, shown and hidden with a hotkey while composing. Off by default. Turning it off installs no Lua filter, downloads no dictionary, and writes no annotation filter, switch or hotkey binding into any schema; the four gloss settings below keep their values for when it is turned back on."
       },
       {
         "key": "annotateChinese",

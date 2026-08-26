@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from lib import generate, settings
+from lib import features, generate, settings
 
 
 class YamlError(Exception):
@@ -200,6 +200,11 @@ JAPANESE = ["rime_ice", "japanese_tw_eng", "sno_japanese"]
 
 
 def render(**overrides):
+    # With candidate annotation on unless a test says otherwise: most of what
+    # is asserted here is the shape of the annotation block, and the switch
+    # defaults to off. The default is asserted by tests/test_features.py and
+    # tests/test_deploy.py against the settings module and the deployed tree.
+    overrides.setdefault("annotation", True)
     return generate.render(settings.resolve(overrides), DICTIONARY)
 
 
@@ -400,15 +405,15 @@ class SchemaSetTests(unittest.TestCase):
         self.assertEqual(unknown, set())
 
     def test_the_family_is_all_chinese(self):
-        self.assertTrue(generate.RIME_ICE_FAMILY <= generate.ANNOTATED_SCHEMAS)
+        self.assertTrue(generate.RIME_ICE_FAMILY <= set(settings.CHINESE_SCHEMAS))
 
     def test_the_annotated_set_is_exactly_the_chinese_schemas(self):
-        self.assertEqual(generate.ANNOTATED_SCHEMAS, set(settings.CHINESE_SCHEMAS))
+        self.assertEqual(features.ANNOTATION.patched, set(settings.CHINESE_SCHEMAS))
 
     def test_no_japanese_schema_is_annotated(self):
         for schema in ("japanese_tw_eng", "sno_japanese"):
             with self.subTest(schema=schema):
-                self.assertNotIn(schema, generate.ANNOTATED_SCHEMAS)
+                self.assertNotIn(schema, features.ANNOTATION.patched)
 
 
 class TraditionalizeReachTests(unittest.TestCase):
@@ -608,13 +613,15 @@ class AnnotationConfigTests(unittest.TestCase):
         self.assertIn(DICTIONARY, keys["annotate/dictionary"])
 
     def test_a_different_path_is_carried_through_unchanged(self):
-        content = generate.render(settings.resolve({}), "/elsewhere/cedict.txt")
+        content = generate.render(settings.resolve({"annotation": True}),
+                                  "/elsewhere/cedict.txt")
         keys = self.annotate_lines(content["rime_ice.custom.yaml"])
         self.assertIn("/elsewhere/cedict.txt", keys["annotate/dictionary"])
         self.assertNotIn(DICTIONARY, content["rime_ice.custom.yaml"])
 
     def test_the_default_path_is_absolute(self):
-        keys = self.annotate_lines(generate.render(settings.resolve({}))["rime_ice.custom.yaml"])
+        keys = self.annotate_lines(
+            generate.render(settings.resolve({"annotation": True}))["rime_ice.custom.yaml"])
         self.assertTrue(Path(keys["annotate/dictionary"].strip('"')).is_absolute())
 
     def test_show_pinyin_still_follows_its_setting(self):

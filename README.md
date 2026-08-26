@@ -6,18 +6,23 @@ input-state indicator on the bar in place of `omarchy.keyboard-layout` — becau
 what decides whether a keystroke becomes Chinese is the Fcitx5 state, not the
 keyboard layout.
 
-On top of that it adds the feature that motivated the plugin: candidates are
-annotated with their meaning in the other language — an English gloss on Chinese
-candidates, a Chinese gloss on English ones — toggled with one key while you are
-looking at the candidate list.
+On top of that it offers the feature that motivated the plugin, off by default:
+turn on **Candidate annotation** and candidates are annotated with their
+meaning in the other language — an English gloss on Chinese candidates, a
+Chinese gloss on English ones — toggled with one key while you are looking at
+the candidate list. The base install is Rime Ice with nothing extra; the
+annotation filter, its dictionary and its schema patches arrive only when the
+switch is on.
 
 Plugin id: `ryuhzk.ime`.
 
 ## Features
 
-- **Bidirectional candidate annotation** — an English gloss on Chinese
-  candidates, a Chinese gloss on English ones, both behind one Rime switch
-  toggled by a hotkey scoped to composing
+- **Bidirectional candidate annotation** (optional, off by default) — an
+  English gloss on Chinese candidates, a Chinese gloss on English ones, both
+  behind one Rime switch toggled by a hotkey scoped to composing. Turn it on
+  with the *Candidate annotation* switch in the panel or
+  `ime-manager settings set annotation=true`
 - **Input-state indicator** — the bar shows the live Fcitx5 state rather than
   the keyboard layout, and takes the place of `omarchy.keyboard-layout`. It
   prints `󰌌` when Fcitx5 is not running, `EN` while keystrokes pass through as
@@ -188,9 +193,9 @@ after the first deploy.
 ~/.config/omarchy/plugins/ryuhzk.ime/ime-manager deploy
 ```
 
-Deploy resolves your settings, downloads the annotation dictionary if either
-annotation direction is on, fetches the pinned sources the enabled features
-need, writes the Rime configuration into `~/.local/share/fcitx5/rime/`, installs
+Deploy resolves your settings, downloads the annotation dictionary if candidate
+annotation is on (with at least one gloss direction), fetches the pinned
+sources the enabled features need, writes the Rime configuration into `~/.local/share/fcitx5/rime/`, installs
 the Fcitx5 configuration into `~/.config/fcitx5/`, its theme files into
 `~/.local/share/fcitx5/themes/` and the environment override into
 `~/.config/environment.d/`, and prints every path it installed, grouped by
@@ -381,14 +386,16 @@ The end-to-end check is manual:
 
 1. Deploy — it exits non-zero if Rime refused the new configuration — then
    confirm Chinese input works in a normal application.
-2. Start a composition and confirm the annotation appears beside the candidates.
+2. With candidate annotation on, start a composition and confirm the
+   annotation appears beside the candidates.
 3. Press the annotation hotkey and confirm it disappears, then press it again to
    bring it back.
 
-Steps 2 and 3 depend on the annotation dictionary having downloaded — see
-[The dictionary](#the-dictionary). `ime-manager status` reports whether it is
-there, along with missing packages, whether anything has been deployed at all,
-and whether the two Hyprland pieces below are in effect:
+Steps 2 and 3 depend on the `annotation` setting being on and on the
+annotation dictionary having downloaded — see
+[The dictionary](#the-dictionary). `ime-manager status` reports both, along
+with missing packages, whether anything has been deployed at all, and whether
+the two Hyprland pieces below are in effect:
 
 ```
 packages missing: none
@@ -473,6 +480,7 @@ default so a typo cannot stop the input method from deploying.
 | Key | Default | What it does |
 |---|---|---|
 | `schemas` | `["rime_ice"]` | Which Rime schemas are written to `schema_list` and deployed. A collapsed multi-select over everything this Rime install offers — full pinyin, seven double-pinyin layouts, zhuyin, shape codes, Japanese. Names are read from each schema's own yaml, never hard-coded. Deselecting one removes its files on the next deploy; the Japanese schemas also stop fetching their pinned sources. At least one Chinese schema always survives. |
+| `annotation` | `false` | The master switch over candidate annotation. Off by default: a fresh install ships Rime Ice with nothing extra. On installs the Lua filter, downloads CC-CEDICT, and patches every selected Chinese schema with the filter, its switch and the hotkey binding; off installs none of that and removes it on the next deploy, leaving the cached dictionary alone. The four `annotate*` settings below keep their values while it is off. |
 | `annotateChinese` | `true` | English glosses on Chinese candidates. Written into the schema as `annotate/chinese`. |
 | `annotateEnglish` | `true` | Chinese glosses on English candidates. Written into the schema as `annotate/english`. With both directions off, the filter, its switch, and the hotkey binding are not written at all. |
 | `annotateShowPinyin` | `false` | Prefixes the gloss with the candidate pinyin. Off by default: the gloss is the point, and the pinyin is already in what you just typed. |
@@ -522,6 +530,14 @@ its file. The cost is that hand edits to any of them are lost on the next
 deploy; each carries a header saying so. Change the settings instead.
 
 ## Candidate annotation
+
+Off by default. Turn it on with the *Candidate annotation* switch in the panel
+or `ime-manager settings set annotation=true`, then deploy. While it is off
+nothing of the feature reaches the machine: no `lua/annotate.lua` in the Rime
+directory, no CC-CEDICT download, and no annotation filter, switch or hotkey
+binding in any `<schema>.custom.yaml` — turning it off after a deploy removes
+all three on the next one. `ime-manager status` and every deploy say when it is
+off, so an absence of glosses is never a mystery.
 
 One Rime `lua_filter` puts the meaning of each candidate into its comment. Type
 `nihao` and the Chinese candidate carries its pinyin and English sense; type
@@ -573,8 +589,9 @@ Traditional Simplified [pin1 yin1] /gloss one/gloss two/
 `https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz`,
 decompresses it — gzip is the only thing removed — and caches it at
 `~/.cache/omarchy-ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt`. A deploy fetches
-it whenever either annotation direction is on, and skips the network entirely
-when both are off.
+it whenever candidate annotation is on with at least one gloss direction, and
+skips the network entirely otherwise — a copy already in the cache is left
+where it is, because it is cache rather than configuration.
 
 **There is no pin.** MDBG publishes one URL that always serves the current
 release and no URL for an older one, so there is nothing to pin to — unlike the
@@ -738,6 +755,7 @@ An honest accounting of what runs today.
 |---|---|
 | Repository skeleton and the `./check` test runner | Done |
 | Settings resolution and persistence (`lib/settings.py`) | Done |
+| Feature declarations — what annotation and Japanese input each install, fetch, own and patch (`lib/features.py`) | Done — one record per feature; deploy, generate and assets read it instead of tables of their own |
 | Rime configuration generation (`lib/generate.py`) | Done |
 | Package detection and installation (`lib/packages.py`) | Done |
 | Asset fetching — Japanese sources pinned by commit, dictionary tracked against upstream (`lib/assets.py`) | Done |

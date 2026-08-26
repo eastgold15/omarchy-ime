@@ -71,11 +71,29 @@ class ManagerDictionaryTests(unittest.TestCase):
 
     def setUp(self):
         self._tmp = TemporaryDirectory()
-        self.cache = Path(self._tmp.name)
-        patcher = mock.patch.dict("os.environ", {"XDG_CACHE_HOME": str(self.cache)})
+        self.cache = Path(self._tmp.name) / "cache"
+        # Every XDG home is redirected, not only the cache. `status` reads the
+        # settings to say whether the dictionary is wanted at all, so no test
+        # may read the machine's own shell.json - and `cmd_deploy` ends with
+        # `hooks.sync`, which rewrites the install manifest wherever
+        # XDG_STATE_HOME points. Redirecting the config home alone made the
+        # hook look absent and dropped it from the machine's own manifest.
+        self.config = Path(self._tmp.name) / "config"
+        patcher = mock.patch.dict("os.environ", {
+            "XDG_CACHE_HOME": str(self.cache), "XDG_CONFIG_HOME": str(self.config),
+            "XDG_STATE_HOME": str(Path(self._tmp.name) / "state"),
+            "XDG_DATA_HOME": str(Path(self._tmp.name) / "data"),
+        })
         patcher.start()
         self.addCleanup(patcher.stop)
         self.addCleanup(self._tmp.cleanup)
+
+    def write_settings(self, **values) -> None:
+        path = self.config / "omarchy" / "shell.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"bar": {"layout": {"right": [
+            {"id": "ryuhzk.ime", **values},
+        ]}}}), encoding="utf-8")
 
     def expected(self) -> Path:
         return assets.dictionary_path(manager.cache_dir())
@@ -119,6 +137,68 @@ class ManagerDictionaryTests(unittest.TestCase):
     def test_status_reports_no_release_when_nothing_is_cached(self):
         self.assertIsNone(self._status()["dictionary_release"])
 
+    def test_status_says_annotation_is_off_on_a_fresh_install(self):
+        result = self._status()
+        self.assertIs(result["annotation"], False)
+        self.assertIs(result["dictionary_needed"], False)
+
+    def test_status_says_the_dictionary_is_needed_once_annotation_is_on(self):
+        self.write_settings(annotation=True)
+        result = self._status()
+        self.assertIs(result["annotation"], True)
+        self.assertIs(result["dictionary_needed"], True)
+
+    def test_a_cached_dictionary_is_still_reported_present_while_not_needed(self):
+        target = self.expected()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("downloaded dictionary", encoding="utf-8")
+        result = self._status()
+        self.assertTrue(result["dictionary"])
+        self.assertFalse(result["dictionary_needed"])
+
+    def _printed(self, **report) -> str:
+        base = {
+            "packages_missing": [], "packages_error": "",
+            "dictionary": False, "dictionary_path": "/x",
+            "dictionary_release": None, "dictionary_needed": True,
+            "annotation": True, "deployed": True, "hook": True,
+            "hypr": {"blur": "on", "toggle": "on"},
+            "input": {"state": "latin"},
+        }
+        base.update(report)
+        printed = io.StringIO()
+        with mock.patch.object(manager, "status", return_value=base), \
+                contextlib.redirect_stdout(printed):
+            manager.cmd_status(mock.Mock(json=False))
+        return printed.getvalue()
+
+    def test_the_printed_status_says_annotation_is_off_and_why_there_is_no_dictionary(self):
+        out = self._printed(annotation=False, dictionary_needed=False)
+        self.assertIn("annotation: off", out)
+        self.assertIn("dictionary: not needed", out)
+        self.assertNotIn("not downloaded", out)
+        # And how to turn it on, so nobody has to read the docs to find out.
+        self.assertIn("annotation=true", out)
+
+    def test_the_printed_status_reports_a_missing_dictionary_only_when_it_is_wanted(self):
+        out = self._printed(annotation=True, dictionary_needed=True, dictionary=False)
+        self.assertIn("annotation: on", out)
+        self.assertIn("dictionary: not downloaded", out)
+
+    def test_the_printed_status_reports_a_present_dictionary(self):
+        out = self._printed(annotation=True, dictionary_needed=True, dictionary=True)
+        self.assertIn("dictionary: present", out)
+
+    def test_the_json_status_carries_both_facts_for_the_panel(self):
+        printed = io.StringIO()
+        with mock.patch.object(manager.packages, "missing", return_value=[]), \
+             mock.patch.object(manager.imestate, "read", return_value={"state": "closed"}), \
+             contextlib.redirect_stdout(printed):
+            manager.cmd_status(mock.Mock(json=True))
+        report = json.loads(printed.getvalue())
+        self.assertIn("annotation", report)
+        self.assertIn("dictionary_needed", report)
+
     def test_the_release_reaches_the_printed_status(self):
         printed = io.StringIO()
         with mock.patch.object(manager, "status", return_value={
@@ -141,7 +221,8 @@ class ManagerDictionaryTests(unittest.TestCase):
                                return_value=Path("/x")) as resolve, \
              mock.patch.object(manager.deploy_lib, "deploy", return_value={}), \
              mock.patch.object(manager.deploy_lib, "redeploy", return_value=REBUILT), \
-             mock.patch.object(manager.settings, "load", return_value={}), \
+             mock.patch.object(manager.settings, "load",
+                               return_value=manager.settings.resolve({})), \
              contextlib.redirect_stdout(io.StringIO()):
             manager.cmd_deploy(None)
         self.assertIsNotNone(resolve.call_args.kwargs.get("notice"))
@@ -158,7 +239,8 @@ class ManagerDictionaryTests(unittest.TestCase):
                                return_value=resolved) as resolve, \
              mock.patch.object(manager.deploy_lib, "deploy", side_effect=fake_deploy), \
              mock.patch.object(manager.deploy_lib, "redeploy", return_value=REBUILT), \
-             mock.patch.object(manager.settings, "load", return_value={}), \
+             mock.patch.object(manager.settings, "load",
+                               return_value=manager.settings.resolve({})), \
              contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(manager.cmd_deploy(None), 0)
         self.assertEqual(recorded["dictionary_path"], resolved)
@@ -212,6 +294,12 @@ class ManagerSettingsCommandTests(unittest.TestCase):
         self.assertEqual(payload["pageSize"], 7)
         self.assertEqual(payload["annotateHotkey"], "Control+e")
         self.assertEqual(payload["schemas"], ["rime_ice"])
+        self.assertIs(payload["annotation"], False)
+
+    def test_set_turns_annotation_on(self):
+        result = self.run_manager("settings", "set", "annotation=true")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIs(self.entry()["annotation"], True)
 
     def test_set_parses_true_and_false_as_booleans(self):
         result = self.run_manager(
@@ -296,6 +384,23 @@ class ManagerRedeployTests(unittest.TestCase):
     one failure that must never be quiet.
     """
 
+    def setUp(self):
+        # `cmd_deploy` is run for real here with only its heavy steps mocked,
+        # and it ends with `hooks.sync`, which writes the install manifest under
+        # XDG_STATE_HOME. Every home is redirected so that nothing here reads
+        # or rewrites the machine's own.
+        self._tmp = TemporaryDirectory()
+        root = Path(self._tmp.name)
+        patcher = mock.patch.dict("os.environ", {
+            variable: str(root / name) for variable, name in (
+                ("XDG_CONFIG_HOME", "config"), ("XDG_STATE_HOME", "state"),
+                ("XDG_DATA_HOME", "data"), ("XDG_CACHE_HOME", "cache"),
+            )
+        })
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.addCleanup(self._tmp.cleanup)
+
     def _deploy(self, redeploy_result):
         out, err = io.StringIO(), io.StringIO()
         with mock.patch.object(manager.deploy_lib, "resolve_dictionary",
@@ -305,7 +410,8 @@ class ManagerRedeployTests(unittest.TestCase):
              mock.patch.object(manager.deploy_lib, "deploy", return_value={}), \
              mock.patch.object(manager.deploy_lib, "redeploy",
                                return_value=redeploy_result) as redeploy, \
-             mock.patch.object(manager.settings, "load", return_value={}), \
+             mock.patch.object(manager.settings, "load",
+                               return_value=manager.settings.resolve({})), \
              contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = manager.cmd_deploy(None)
         return code, out.getvalue(), err.getvalue(), redeploy
@@ -357,6 +463,28 @@ class ManagerRedeployTests(unittest.TestCase):
         _, out, _, _ = self._deploy(NOT_RUNNING)
         self.assertNotIn("rime: rebuilt", out)
 
+    def test_a_deploy_with_annotation_off_says_so_and_how_to_turn_it_on(self):
+        # The default. A user wondering why there are no glosses should get the
+        # answer from the deploy that produced the configuration.
+        _, out, err, _ = self._deploy(REBUILT)
+        self.assertIn("annotation: off", out)
+        self.assertIn("annotation=true", out)
+        self.assertEqual(err, "")
+
+    def test_a_deploy_with_annotation_on_does_not_say_it_is_off(self):
+        with mock.patch.object(manager.settings, "load",
+                               return_value=manager.settings.resolve({"annotation": True})), \
+             mock.patch.object(manager.deploy_lib, "resolve_dictionary",
+                               return_value=Path("/cache/cedict.txt")), \
+             mock.patch.object(manager.packages, "check",
+                               return_value={"missing": [], "error": ""}), \
+             mock.patch.object(manager.deploy_lib, "deploy", return_value={}), \
+             mock.patch.object(manager.deploy_lib, "redeploy", return_value=REBUILT):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+                manager.cmd_deploy(None)
+        self.assertNotIn("annotation: off", out.getvalue())
+
     def test_a_verdict_with_no_evidence_says_so_rather_than_rebuilt(self):
         code, out, err, _ = self._deploy(UNVERIFIED)
         self.assertEqual(code, 0)
@@ -374,7 +502,8 @@ class ManagerRedeployTests(unittest.TestCase):
              mock.patch.object(manager.deploy_lib, "deploy",
                                return_value={"rime": ["rime_ice.custom.yaml"]}) as written, \
              mock.patch.object(manager.deploy_lib, "redeploy", return_value=NOT_REBUILT), \
-             mock.patch.object(manager.settings, "load", return_value={}), \
+             mock.patch.object(manager.settings, "load",
+                               return_value=manager.settings.resolve({})), \
              contextlib.redirect_stdout(io.StringIO()), \
              contextlib.redirect_stderr(io.StringIO()):
             manager.cmd_deploy(None)

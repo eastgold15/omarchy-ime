@@ -36,7 +36,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
-from lib import assets, generate, settings as settings_lib, theme as theme_lib
+from lib import assets, features, generate, settings as settings_lib, theme as theme_lib
 
 MANIFEST_NAME = "installed.json"
 
@@ -148,20 +148,17 @@ BUILD_SECONDS = 90.0
 POLL_SECONDS = 0.5
 COMMAND_TIMEOUT = 30
 
-# Payload directory -> the target it installs into. Groups whose name appears in
-# GROUP_SCHEMAS are installed only when one of their schemas is selected. There
-# is no themes group: the candidate window's theme is generated from the user's own
-# Omarchy theme rather than shipped, so this plugin vendors nobody's colours.
+# Payload directory -> the target it installs into. A group a feature owns
+# (see lib/features.py) is installed only while that feature is enabled, and
+# removed by the ordinary stale-file path once it is not; a group nobody owns is
+# part of the core and always installed. There is no themes group: the
+# candidate window's theme is generated from the user's own Omarchy theme rather
+# than shipped, so this plugin vendors nobody's colours.
 PAYLOAD_GROUPS = {
     "rime": "rime",
     "rime-japanese": "rime",
     "fcitx5": "fcitx5",
 }
-
-# Payload directory -> the schemas that need it. A group named here is installed
-# only while one of its schemas is selected, and removed by the ordinary
-# stale-file path once none of them is.
-GROUP_SCHEMAS = {"rime-japanese": ("japanese_tw_eng", "sno_japanese")}
 
 # Where the generated Fcitx5 theme is installed. The directory name is the
 # plugin's own and never the Omarchy theme's, so switching themes rewrites one
@@ -199,8 +196,10 @@ def resolve_dictionary(settings: dict, cache_root: Path, fetcher=assets.download
 
     The path is returned whether or not the download succeeded: the filter reads
     an absent file as an empty dictionary, so a deploy after a failed download is
-    still a correct deploy, minus the glosses. Nothing is downloaded while both
-    annotation directions are off.
+    still a correct deploy, minus the glosses. Nothing is downloaded unless a
+    feature that reads the dictionary is active (see lib/features.py); a copy
+    already in the cache is left alone either way, because it is cache and not
+    configuration.
 
     `notice` is handed straight to `assets.ensure_dictionary`, which is what
     says which CC-CEDICT release arrived, whether it is a different one than was
@@ -208,7 +207,7 @@ def resolve_dictionary(settings: dict, cache_root: Path, fetcher=assets.download
     swallowing it is the difference between a dictionary that can be swapped
     under the user without a word and one that cannot.
     """
-    if settings["annotateChinese"] or settings["annotateEnglish"]:
+    if features.dictionary_wanted(settings):
         assets.ensure_dictionary(cache_root, fetcher, notice=notice)
     return assets.dictionary_path(cache_root)
 
@@ -495,13 +494,16 @@ def _selected(settings: dict) -> list[str]:
 
 
 def active_groups(settings: dict) -> list[str]:
-    """Payload groups this configuration installs, in a stable order."""
-    selected = set(_selected(settings))
+    """Payload groups this configuration installs, in a stable order.
+
+    A core group is always in; a group a feature owns is in while that feature
+    is enabled. The feature decides, so that turning one off removes its files
+    by the same stale-file path that deselecting a schema does.
+    """
     return [
         group
         for group in PAYLOAD_GROUPS
-        if group not in GROUP_SCHEMAS
-        or any(schema in selected for schema in GROUP_SCHEMAS[group])
+        if (owner := features.owner(group)) is None or owner.enabled(settings)
     ]
 
 
@@ -509,7 +511,7 @@ def needed_sources(settings: dict) -> list[str]:
     """External sources this configuration needs, in a stable order."""
     ordered: list[str] = []
     for schema in _selected(settings):
-        for name in assets.SCHEMA_SOURCES.get(schema, ()):
+        for name in features.SCHEMA_SOURCES.get(schema, ()):
             if name not in ordered:
                 ordered.append(name)
     return ordered
@@ -704,7 +706,7 @@ def deploy(settings: dict, targets: dict[str, Path], state_dir: Path, payload_di
     withheld = [
         schema for schema in _selected(settings)
         if any(source in unusable
-               for source in assets.SCHEMA_SOURCES.get(schema, ()))
+               for source in features.SCHEMA_SOURCES.get(schema, ()))
     ]
     if withheld:
         announce(

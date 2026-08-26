@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib import deploy as deploy_lib  # noqa: E402
-from lib import assets, hooks, hyprland, imestate, packages, settings  # noqa: E402
+from lib import assets, features, hooks, hyprland, imestate, packages, settings  # noqa: E402
 
 VERSION = "0.1.0"
 
@@ -60,14 +60,16 @@ def schema_source_dirs() -> list[Path]:
     the settings picker shows is read from these rather than invented. The
     user's own Rime directory comes first because a schema they installed
     themselves shadows the packaged one; /usr/share/rime-data is where the
-    distribution's schemas live; the plugin's payload is where the Japanese two
-    live before they are deployed, so they can be named before they exist on the
-    user's disk.
+    distribution's schemas live; the payload group of every feature that brings
+    schemas of its own is where those live before they are deployed, so they
+    can be named before they exist on the user's disk.
     """
     return [
         rime_dir(),
         Path("/usr/share/rime-data"),
-        PLUGIN_DIR / "payload" / "rime-japanese",
+        *(PLUGIN_DIR / "payload" / group
+          for feature in features.FEATURES if feature.schemas
+          for group in feature.groups),
     ]
 
 
@@ -156,6 +158,17 @@ def cmd_deploy(_args) -> int:
             + " are not installed, so Rime cannot build this configuration;"
               " run `ime-manager packages install` first"
         )
+
+    # A feature that is switched off is said so, once, in the deploy that
+    # left it out. Not a warning: it is the default, and the base install is
+    # meant to be Rime Ice with nothing extra. But a user wondering why there
+    # are no glosses should find the answer here rather than in the docs.
+    for feature in features.FEATURES:
+        if feature.setting is not None and not feature.enabled(resolved):
+            print(
+                f"{feature.id}: off; turn it on in the panel or with"
+                f" `ime-manager settings set {feature.setting}=true`"
+            )
 
     # Downloading the dictionary is part of resolving where it is: a failure
     # returns the path anyway, so the schema is generated pointing at a file that
@@ -282,6 +295,11 @@ def cmd_state(args) -> int:
 def status() -> dict:
     """What needs attention, as data. The panel reads this as JSON."""
     dictionary = dictionary_path()
+    # The settings decide whether the dictionary is wanted at all. Reported
+    # beside whether it is there, because "not downloaded" is a fault when
+    # glosses are on and nothing at all when they are off - and off is the
+    # default.
+    resolved = settings.load(shell_json())
     # Asked for as a pair: which packages are absent, and whether the question
     # could be asked at all. A machine with no `omarchy` on PATH must not be
     # told everything is installed, and must not be told everything is missing
@@ -290,7 +308,9 @@ def status() -> dict:
     return {
         "packages_missing": installed["missing"],
         "packages_error": installed["error"],
+        "annotation": features.ANNOTATION.enabled(resolved),
         "dictionary": dictionary.is_file(),
+        "dictionary_needed": features.dictionary_wanted(resolved),
         "dictionary_path": str(dictionary),
         # Which CC-CEDICT release is actually in use, from the record written
         # when it was accepted: upstream's own version, date and entry count,
@@ -322,10 +342,23 @@ def cmd_status(args) -> int:
             print(f"packages: could not check ({result['packages_error']})")
         else:
             print(f"packages missing: {', '.join(result['packages_missing']) or 'none'}")
-        print(f"dictionary: {'present' if result['dictionary'] else 'not downloaded'}")
+        if result.get("annotation"):
+            print("annotation: on")
+        else:
+            print("annotation: off (no glosses; turn it on in the panel or with"
+                  " `ime-manager settings set annotation=true`)")
+        if result.get("dictionary_needed", True):
+            print(f"dictionary: {'present' if result['dictionary'] else 'not downloaded'}")
+        elif result["dictionary"]:
+            print("dictionary: not needed while annotation is off; the cached copy is kept")
+        else:
+            print("dictionary: not needed while annotation is off")
         print(f"dictionary path: {result['dictionary_path']}")
-        print("dictionary release: "
-              + assets.release_summary(result.get("dictionary_release")))
+        # Which release is in use, when there is one to name or a reason to
+        # want one; "not downloaded" beside "not needed" is noise.
+        if result.get("dictionary_needed", True) or result["dictionary"]:
+            print("dictionary release: "
+                  + assets.release_summary(result.get("dictionary_release")))
         print(f"deployed: {'yes' if result['deployed'] else 'no'}")
         print(f"theme hook: {'installed' if result['hook'] else 'not installed'}")
         print(f"hyprland candidate blur: {result['hypr']['blur']}")

@@ -219,18 +219,8 @@ SOURCE_FILES = {
     },
 }
 
-# Which sources a schema needs, checked against what each schema actually reads.
-# A source is fetched only while a schema that names it is selected, so a user
-# who never picks a Japanese schema never touches the network.
-#
-# sno_japanese composes from the `japanese` dictionary alone, which is built
-# from rime-japanese's mozc, jmdict and kana tables. japanese_tw_eng also
-# reverse-looks-up through japanese_pinyin and translate_en2jp, whose tables
-# come from rime-snomiao, so it needs both.
-SCHEMA_SOURCES = {
-    "japanese_tw_eng": ("rime-japanese", "rime-snomiao"),
-    "sno_japanese": ("rime-japanese",),
-}
+# Which schema needs which of these sources is the schema's feature's business,
+# declared once in lib/features.py beside the schema itself.
 
 
 def cache_path(name: str, revision: str, cache_root: Path) -> Path:

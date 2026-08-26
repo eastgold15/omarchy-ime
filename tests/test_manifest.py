@@ -100,5 +100,28 @@ class SchemaPickerTests(unittest.TestCase):
         self.assertNotIn("japanese", self.manifest["barWidget"]["defaults"])
 
 
+class AnnotationSwitchTests(unittest.TestCase):
+    def setUp(self):
+        manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+        self.widget = manifest["barWidget"]
+        self.entry = {item["key"]: item for item in self.widget["schema"]}["annotation"]
+
+    def test_it_is_a_boolean_that_defaults_to_off(self):
+        self.assertEqual(self.entry["type"], "boolean")
+        self.assertIs(self.entry["defaultValue"], False)
+        self.assertIs(self.widget["defaults"]["annotation"], False)
+
+    def test_the_description_says_what_turning_it_off_removes(self):
+        description = self.entry["description"]
+        for word in ("filter", "dictionary", "hotkey", "off by default"):
+            self.assertIn(word, description.lower(), word)
+
+    def test_it_comes_before_the_settings_it_governs(self):
+        keys = [item["key"] for item in self.widget["schema"]]
+        for key in ("annotateChinese", "annotateEnglish", "annotateShowPinyin",
+                    "annotateHotkey"):
+            self.assertLess(keys.index("annotation"), keys.index(key), key)
+
+
 if __name__ == "__main__":
     unittest.main()

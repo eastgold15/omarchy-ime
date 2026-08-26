@@ -298,7 +298,8 @@ class ManagerHookCommandTests(unittest.TestCase):
                                return_value={"succeeded": True, "verified": True,
                                              "errors": [], "detail": "",
                                              "triggered": True}), \
-             mock.patch.object(manager.settings, "load", return_value={}):
+             mock.patch.object(manager.settings, "load",
+                               return_value=manager.settings.resolve({})):
             run("deploy")
         self.assertEqual(sorted(self.manifest()[hooks.TARGET]), [hooks.HOOK_NAME])
 
@@ -682,7 +683,8 @@ class DeployPreflightTests(unittest.TestCase):
                                return_value={"triggered": True, "succeeded": True,
                                              "verified": True, "errors": [],
                                              "detail": "Rime rebuilt the schemas"}), \
-             mock.patch.object(manager.settings, "load", return_value={}), \
+             mock.patch.object(manager.settings, "load",
+                               return_value=manager.settings.resolve({})), \
              contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = manager.cmd_deploy(None)
         return code, out.getvalue()

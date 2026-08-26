@@ -170,6 +170,14 @@ PANEL_WIDTH_BOUNDS = (400, 720)
 # value, type, and for integers the accepted range
 DEFAULTS = {
     "schemas": (DEFAULT_SCHEMAS, list, None),
+    # The master switch over candidate annotation: the Lua filter, the
+    # CC-CEDICT download, and the patch every Chinese schema carries. Off by
+    # default - the base install is Rime Ice with nothing extra, and glosses
+    # are an add-on the user asks for. The four `annotate*` settings below keep
+    # their values while it is off. To flip the default, change this line and
+    # the two matching values in manifest.json; tests/test_manifest.py holds
+    # the three together.
+    "annotation": (False, bool, None),
     "annotateChinese": (True, bool, None),
     "annotateEnglish": (True, bool, None),
     "annotateShowPinyin": (False, bool, None),

@@ -38,6 +38,10 @@ Panel {
   // Attention state, from `ime-manager status --json`.
   property var packagesMissing: []
   property bool dictionaryReady: false
+  // Whether anything would read the dictionary: false while candidate
+  // annotation is off, which is the default, and then its absence is not a
+  // fault. Read as true until the manager says otherwise.
+  property bool dictionaryNeeded: true
   property bool deployed: false
   property bool statusLoaded: false
 
@@ -146,14 +150,29 @@ Panel {
   // of the five carried a sentence that restated their own label - "Show what a
   // Chinese candidate means in English" under "English gloss on Chinese
   // candidates" - and a row of those teaches the reader to stop reading the
-  // ones that matter. What is left is the two facts a label has no room for:
-  // which conversion profile the traditional switch uses, and where the pinyin
-  // lands.
+  // ones that matter. What is left is the facts a label has no room for:
+  // which conversion profile the traditional switch uses, where the pinyin
+  // lands, and what the annotation switch costs to turn on.
+  //
+  // `requires` names the switch a row answers to. The whole annotation
+  // feature - the filter, the dictionary download, the patch in every Chinese
+  // schema - hangs off one master switch, off by default; the rows that only
+  // mean something while it is on keep their values but take no clicks until
+  // it is. The master switch itself is an everyday setting, because it is the
+  // one a person reaches for.
   readonly property var booleanSettings: [
+    {
+      key: "annotation",
+      group: "settings",
+      fallback: false,
+      label: "Candidate annotation",
+      description: "Off by default. On downloads CC-CEDICT for the glosses."
+    },
     {
       key: "annotateChinese",
       group: "settings",
       fallback: true,
+      requires: "annotation",
       label: "English gloss on Chinese",
       description: ""
     },
@@ -161,6 +180,7 @@ Panel {
       key: "annotateEnglish",
       group: "settings",
       fallback: true,
+      requires: "annotation",
       label: "Chinese gloss on English",
       description: ""
     },
@@ -175,6 +195,7 @@ Panel {
       key: "annotateShowPinyin",
       group: "annotations",
       fallback: false,
+      requires: "annotation",
       label: "Pinyin in the gloss",
       description: "Prefixed, before the meaning."
     },
@@ -459,10 +480,14 @@ Panel {
       {
         id: "dictionary",
         label: "Dictionary",
-        ok: dictionaryReady,
-        detail: dictionaryReady
-          ? ""
-          : "The next deploy fetches it"
+        // Not wanted is not missing. With annotation off - the default -
+        // nothing reads the dictionary, so its absence is nothing to fix.
+        ok: dictionaryReady || !dictionaryNeeded,
+        detail: !dictionaryNeeded
+          ? "Not needed while candidate annotation is off"
+          : dictionaryReady
+            ? ""
+            : "The next deploy fetches it"
       },
       {
         id: "deploy",
@@ -729,6 +754,9 @@ Panel {
         var report = JSON.parse(root.statusOutput)
         root.packagesMissing = report.packages_missing instanceof Array ? report.packages_missing : []
         root.dictionaryReady = report.dictionary === true
+        // Absent from an older manager's report reads as needed, which is the
+        // stricter of the two answers.
+        root.dictionaryNeeded = report.dictionary_needed !== false
         root.deployed = report.deployed === true
         var hypr = report.hypr instanceof Object ? report.hypr : {}
         // Anything that is not one of the three known answers is read as
@@ -1384,9 +1412,9 @@ Panel {
             }
           }
 
-          // The everyday half, always on screen. Three switches, and no header
+          // The everyday half, always on screen. Four switches, and no header
           // of their own: SETTINGS above has already named them, and a heading
-          // over three rows is a heading for its own sake.
+          // over four rows is a heading for its own sake.
           Column {
             width: parent.width
             spacing: Style.spacing.md
@@ -1500,7 +1528,8 @@ Panel {
                     font.family: root.fontFamily
                     font.pixelSize: Style.font.body
                     text: root.settingValue("annotateHotkey", "Control+e")
-                    enabled: !root.settingsLocked
+                    // Answers to the master switch like the gloss rows do.
+                    enabled: !root.settingsLocked && root.settingValue("annotation", false) === true
                     Keys.onEscapePressed: root.close()
                     // Written when the field is left or Enter is pressed rather than
                     // on every keystroke: a half-typed hotkey is not a hotkey.
@@ -1928,7 +1957,11 @@ Panel {
     accent: Color.accent
     fontFamily: root.fontFamily
     checked: root.settingValue(entry.key, entry.fallback)
+    // Locked while a write or a deploy is running, and also while the switch
+    // this row answers to (`requires`) is off: the value stays visible and
+    // stored, it just cannot be changed until the feature is on.
     enabled: !root.settingsLocked
+      && (entry.requires === undefined || root.settingValue(entry.requires, false) === true)
     onClicked: root.writeSetting(entry.key, !checked, entry.label)
   }
 
