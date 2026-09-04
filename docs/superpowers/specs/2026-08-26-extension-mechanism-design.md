@@ -21,7 +21,7 @@ that a third party can write one without touching the core.
   librime's process, in the keystroke path, as the user. The mechanism makes
   that fact loud and consented to; it does not make it safe.
 - Not compatible with plum recipes or with Omarchy's plugin format. Both were
-  considered and rejected — see *Alternatives*.
+  considered and rejected — see _Alternatives_.
 - Not auto-updating. Ever.
 
 ## Decisions already taken
@@ -29,12 +29,12 @@ that a third party can write one without touching the core.
 These were settled with the owner before this document and are not reopened
 here.
 
-| Decision | Choice |
-|---|---|
-| Who can publish an extension | Anyone. An extension is any git repository at a pinned commit. |
-| May an extension ship Lua | Yes, if it declares the `lua` capability; the user is told and must confirm at install. Undeclared Lua is refused, not warned about. |
-| Management surface, first version | CLI does install, remove, update. The panel lists installed extensions and renders their declared settings; it does not install. |
-| What happens to v0.1.0 | Ships as submitted. This is v0.2, developed on a branch, unpublished until done. |
+| Decision                          | Choice                                                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Who can publish an extension      | Anyone. An extension is any git repository at a pinned commit.                                                                       |
+| May an extension ship Lua         | Yes, if it declares the `lua` capability; the user is told and must confirm at install. Undeclared Lua is refused, not warned about. |
+| Management surface, first version | CLI does install, remove, update. The panel lists installed extensions and renders their declared settings; it does not install.     |
+| What happens to v0.1.0            | Ships as submitted. This is v0.2, developed on a branch, unpublished until done.                                                     |
 
 ## Alternatives considered
 
@@ -156,39 +156,43 @@ tests, whatever else — ignored by the installer, kept in the checkout.
   "patches": {
     "*": {
       "filters+": ["lua_filter@annotation/annotate"],
-      "bindings+": [
-        { "accept": "$annotateHotkey", "toggle": "annotate", "when": "composing" }
-      ],
-      "switches+": [
-        { "name": "annotate", "reset": 1, "states": ["", "gloss"] }
-      ]
+      "bindings+": [{ "accept": "$annotateHotkey", "toggle": "annotate", "when": "composing" }],
+      "switches+": [{ "name": "annotate", "reset": 1, "states": ["", "gloss"] }]
     }
   },
 
   "settings": [
-    { "key": "annotateChinese", "type": "boolean", "default": true,
+    {
+      "key": "annotateChinese",
+      "type": "boolean",
+      "default": true,
       "label": "English gloss on Chinese",
-      "description": "Show what a Chinese candidate means in English." },
-    { "key": "annotateHotkey", "type": "string", "default": "Control+e",
-      "label": "Annotation hotkey" }
+      "description": "Show what a Chinese candidate means in English."
+    },
+    {
+      "key": "annotateHotkey",
+      "type": "string",
+      "default": "Control+e",
+      "label": "Annotation hotkey"
+    }
   ]
 }
 ```
 
 Field by field:
 
-| Field | Required | Meaning |
-|---|---|---|
-| `extensionApi` | yes | The manifest format. Core refuses a value it does not know. |
-| `id` | yes | `[a-z][a-z0-9-]{1,31}`. Names the directory, the Lua namespace, the settings namespace, the manifest group. Must not collide with a core group name. |
-| `name`, `version`, `author`, `license` | yes | Shown at install and in the panel. Not interpreted. |
-| `core` | yes | A version constraint on the core, `>=x.y.z` only. |
-| `capabilities` | yes, may be empty | See *Capabilities*. |
-| `sources` | no | Pinned downloads, by name. `kind` is `git` or `https`. A `git` source has `url` and `revision` (40 hex); an `https` source has `url`, `hosts`, optional `gzip`, size caps, and a `verify` name. Every source has `files`: a map from a path inside the fetched content to a destination under the Rime directory — see *Sources*. |
-| `packages`, `aur` | no | Package names the extension needs. Installed through the same terminal flow as the core's own. |
-| `schemas` | no | Schema ids this extension makes available to the picker. Each must exist as `rime/<id>.schema.yaml` in the extension or come from one of its sources. |
-| `patches` | no | Per-schema patches, keyed by schema id, or `*` for every deployed schema the core lists as Chinese (today's `ANNOTATED_SCHEMAS`), or `*all*` for every deployed schema. See *Patches*. |
-| `settings` | no | Declarative settings. See *Settings*. |
+| Field                                  | Required          | Meaning                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extensionApi`                         | yes               | The manifest format. Core refuses a value it does not know.                                                                                                                                                                                                                                                                       |
+| `id`                                   | yes               | `[a-z][a-z0-9-]{1,31}`. Names the directory, the Lua namespace, the settings namespace, the manifest group. Must not collide with a core group name.                                                                                                                                                                              |
+| `name`, `version`, `author`, `license` | yes               | Shown at install and in the panel. Not interpreted.                                                                                                                                                                                                                                                                               |
+| `core`                                 | yes               | A version constraint on the core, `>=x.y.z` only.                                                                                                                                                                                                                                                                                 |
+| `capabilities`                         | yes, may be empty | See _Capabilities_.                                                                                                                                                                                                                                                                                                               |
+| `sources`                              | no                | Pinned downloads, by name. `kind` is `git` or `https`. A `git` source has `url` and `revision` (40 hex); an `https` source has `url`, `hosts`, optional `gzip`, size caps, and a `verify` name. Every source has `files`: a map from a path inside the fetched content to a destination under the Rime directory — see _Sources_. |
+| `packages`, `aur`                      | no                | Package names the extension needs. Installed through the same terminal flow as the core's own.                                                                                                                                                                                                                                    |
+| `schemas`                              | no                | Schema ids this extension makes available to the picker. Each must exist as `rime/<id>.schema.yaml` in the extension or come from one of its sources.                                                                                                                                                                             |
+| `patches`                              | no                | Per-schema patches, keyed by schema id, or `*` for every deployed schema the core lists as Chinese (today's `ANNOTATED_SCHEMAS`), or `*all*` for every deployed schema. See _Patches_.                                                                                                                                            |
+| `settings`                             | no                | Declarative settings. See _Settings_.                                                                                                                                                                                                                                                                                             |
 
 Anything not in this table is an error, not ignored. An unknown key is the
 most likely sign of a manifest written for a later `extensionApi`.
@@ -232,7 +236,7 @@ Steps, in order, and each stops the install on failure:
 
 1. **Fetch** to a temporary directory under the extensions root, never in
    place: `git init`, `git -c fetch.fsckObjects=true fetch --depth 1 <url>
-   <sha>`, `git checkout FETCH_HEAD`, then `git rev-parse HEAD` compared to the
+<sha>`, `git checkout FETCH_HEAD`, then `git rev-parse HEAD` compared to the
    sha. Credential prompting disabled, 300 s timeout. `.git` removed after the
    comparison succeeds.
 2. **Validate the manifest** against the table above: shape, id syntax,
@@ -266,6 +270,7 @@ Steps, in order, and each stops the install on failure:
 
    `--yes` skips the prompt for scripts. The panel never reaches this step,
    which is the whole reason the panel does not install.
+
 6. **Move into place** — `os.rename` of the temporary directory to
    `extensions/<id>/` — and **register**: id, name, version, url, sha, the
    capabilities that were confirmed, the install time. Registration is an
@@ -299,7 +304,7 @@ needs. It gains the registered extensions, each as a group:
 - **Settings mirror** — see below — is written into the same file.
 - **Outcome verification** is unchanged and now covers extension schemas: a
   deploy that asked for `sno_japanese` and does not find `build/sno_japanese.
-  schema.yaml` newer than the deploy is a failed deploy, whoever the schema
+schema.yaml` newer than the deploy is a failed deploy, whoever the schema
   came from.
 
 ## Settings
@@ -338,13 +343,13 @@ A patch says what an extension adds to a schema. It is constrained to the
 operations the core knows are safe to compose, because the one time a patch
 was written freehand it broke every schema at once.
 
-| Operation | Value | Rendered as |
-|---|---|---|
-| `filters+` | list of strings | `engine/filters/+: [...]` |
-| `translators+` | list of strings | `engine/translators/+: [...]` |
-| `bindings+` | list of `{accept, when, toggle\|send\|set_option}` | `key_binder/bindings/+: [...]` |
-| `switches+` | list of `{name, reset?, states}` | `switches/+: [...]` |
-| `set` | mapping of `path: scalar` | `path: value`, one per line |
+| Operation      | Value                                              | Rendered as                    |
+| -------------- | -------------------------------------------------- | ------------------------------ |
+| `filters+`     | list of strings                                    | `engine/filters/+: [...]`      |
+| `translators+` | list of strings                                    | `engine/translators/+: [...]`  |
+| `bindings+`    | list of `{accept, when, toggle\|send\|set_option}` | `key_binder/bindings/+: [...]` |
+| `switches+`    | list of `{name, reset?, states}`                   | `switches/+: [...]`            |
+| `set`          | mapping of `path: scalar`                          | `path: value`, one per line    |
 
 Rules, enforced when the manifest is validated, not at deploy:
 
@@ -363,11 +368,11 @@ in the core — not a reason to allow raw YAML.
 
 ## Capabilities
 
-| Capability | Granted | Refused without it |
-|---|---|---|
-| `lua` | Files under `lua/` are installed and may be referenced by `filters+`/`translators+`. | Any file under `lua/`. |
-| `sources` | `sources` may be declared and fetched. | Any `sources` entry. |
-| `packages` | `packages`/`aur` may be declared. | Any package entry. |
+| Capability | Granted                                                                              | Refused without it     |
+| ---------- | ------------------------------------------------------------------------------------ | ---------------------- |
+| `lua`      | Files under `lua/` are installed and may be referenced by `filters+`/`translators+`. | Any file under `lua/`. |
+| `sources`  | `sources` may be declared and fetched.                                               | Any `sources` entry.   |
+| `packages` | `packages`/`aur` may be declared.                                                    | Any package entry.     |
 
 The summary at install spells each one out in terms of what it lets the
 extension do to the user, not in terms of the capability name. `lua` is
@@ -444,11 +449,11 @@ and says which one, rather than deploying something it no longer understands.
 
 ## What leaves the core
 
-| Today | v0.2 |
-|---|---|
-| `payload/rime/lua/annotate.lua`, CC-CEDICT fetch and verification, `annotate*` settings, the annotation patch | **`omarchy-ime-annotation`** — first-party extension, its own repository |
+| Today                                                                                                                 | v0.2                                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `payload/rime/lua/annotate.lua`, CC-CEDICT fetch and verification, `annotate*` settings, the annotation patch         | **`omarchy-ime-annotation`** — first-party extension, its own repository                                                         |
 | `payload/rime-japanese/*`, `rime-japanese`/`rime-snomiao` sources, `japanese_tw_eng` and `sno_japanese` in the picker | **`omarchy-ime-japanese`** — first-party extension, its own repository; the derived schemas and their attribution travel with it |
-| — | **`omarchy-ime-translation`** — later, per `docs/TODO.md` |
+| —                                                                                                                     | **`omarchy-ime-translation`** — later, per `docs/TODO.md`                                                                        |
 
 The core keeps: Fcitx5 configuration, `rime_ice` and its patches,
 `traditionalize`, `pageSize`, `verticalCandidates`, the theme and its hook, the

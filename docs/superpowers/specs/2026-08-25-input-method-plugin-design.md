@@ -125,16 +125,16 @@ No separate config file.
 Every key is flat and camelCase — the same names in `manifest.json` and in
 `DEFAULTS` in `lib/settings.py`, so there is one spelling to get right:
 
-| Setting | Default | Effect when off |
-|---|---|---|
-| `japanese` | off | The Japanese schemas are not deployed, the two pinned sources are not fetched, and `schema_list` omits them |
-| `annotateChinese` | on | Chinese candidates carry no English gloss |
-| `annotateEnglish` | on | English candidates carry no Chinese gloss. With both directions off, the filter, its switch and the hotkey binding are not written at all, and no dictionary is downloaded |
-| `annotateShowPinyin` | off | The gloss on a Chinese candidate is shown without its pinyin |
-| `annotateHotkey` | `Control+e` | — |
-| `traditionalize` | on | No `traditionalize/opencc_config: s2twp.json` patch |
-| `pageSize` | 10 | — (whole number, 1 to 10) |
-| `verticalCandidates` | on | Candidates render horizontally (`style/horizontal: true`) |
+| Setting              | Default     | Effect when off                                                                                                                                                            |
+| -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `japanese`           | off         | The Japanese schemas are not deployed, the two pinned sources are not fetched, and `schema_list` omits them                                                                |
+| `annotateChinese`    | on          | Chinese candidates carry no English gloss                                                                                                                                  |
+| `annotateEnglish`    | on          | English candidates carry no Chinese gloss. With both directions off, the filter, its switch and the hotkey binding are not written at all, and no dictionary is downloaded |
+| `annotateShowPinyin` | off         | The gloss on a Chinese candidate is shown without its pinyin                                                                                                               |
+| `annotateHotkey`     | `Control+e` | —                                                                                                                                                                          |
+| `traditionalize`     | on          | No `traditionalize/opencc_config: s2twp.json` patch                                                                                                                        |
+| `pageSize`           | 10          | — (whole number, 1 to 10)                                                                                                                                                  |
+| `verticalCandidates` | on          | Candidates render horizontally (`style/horizontal: true`)                                                                                                                  |
 
 The two annotation directions reach Rime as the deploy-time config keys
 `annotate/chinese` and `annotate/english`; see the annotation section for why
@@ -184,15 +184,15 @@ was still toggling.
 
 The reasoning first written here was wrong even though the conclusion held. It
 claimed `key_binder` stops at the first match. Measured later against librime
-1.17.0, a *later* binding wins over an earlier one — which is why appending the
+1.17.0, a _later_ binding wins over an earlier one — which is why appending the
 hotkey works on the schemas whose presets already bind `Control+e` to
 end-of-line, and why no removal is needed there. Worth recording: a right answer
 reached by wrong reasoning is harder to catch than a wrong answer, because
 nothing about it invites a second look.
 
 What replaced it splits the two questions by how often each is asked. There is
-one switch, `annotate`, and the hotkey toggles it: that answers *show glosses
-right now*, which is worth reaching for mid-word. *Which direction to gloss* is a
+one switch, `annotate`, and the hotkey toggles it: that answers _show glosses
+right now_, which is worth reaching for mid-word. _Which direction to gloss_ is a
 deploy-time setting, written into the schema as `annotate/chinese` and
 `annotate/english` and read by the filter when it is created, because nobody
 changes their mind about that while typing. The switch is written with
@@ -472,6 +472,7 @@ input works, toggle the hotkey, confirm the annotation appears and disappears.
    thing here, so it never runs implicitly. The panel reports what is missing and
    installs only on an explicit action, and a refusal or failure leaves the rest
    of the deploy to proceed against whatever is already installed.
+
 3. **The candidate window follows the desktop.** Superseded 2026-08-25: the
    plugin shipped `catppuccin-macchiato-maroon` and the candidate window stayed
    navy while the desktop was warm brown - it read as a different product. The
@@ -503,12 +504,12 @@ input works, toggle the hotkey, confirm the annotation appears and disappears.
    removed, because it never worked and could not be made to work. Turning it
    off emitted `engine/translators/-`, and librime has no list-subtraction
    operator — the patch failed with `error applying patch to
-   engine/translators/-` and took the whole schema build down with it, so the
+engine/translators/-` and took the whole schema build down with it, so the
    one thing the switch reliably did was break Chinese input.
 
-   It could not be repaired either. Rime Ice mounts `melt_eng` as a *secondary*
+   It could not be repaired either. Rime Ice mounts `melt_eng` as a _secondary_
    translator by design — upstream's own comment is `melt_eng  #
-   英文输入，作为次翻译器挂载到拼音方案` — competing with pinyin by
+英文输入，作为次翻译器挂载到拼音方案` — competing with pinyin by
    `initial_quality` weight (1.2 against 1.1). There is no upstream switch or
    hotkey to disable it, and none of Rime Ice's seven switches covers it.
    Removing it would mean rewriting the engine list the schema owns.

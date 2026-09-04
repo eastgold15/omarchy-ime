@@ -205,6 +205,13 @@ Panel {
       fallback: true,
       label: "Vertical candidate list",
       description: ""
+    },
+    {
+      key: "qtImModule",
+      group: "candidates",
+      fallback: true,
+      label: "Input method for XWayland Qt apps",
+      description: "QT_IM_MODULE=fcitx, so apps like WeChat can type Chinese. Next login."
     }
   ]
 

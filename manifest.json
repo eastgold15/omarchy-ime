@@ -6,9 +6,7 @@
   "author": "ryuhzk",
   "license": "MIT",
   "description": "Own the whole input method from the bar: Fcitx5, Rime, and candidate annotation.",
-  "kinds": [
-    "bar-widget"
-  ],
+  "kinds": ["bar-widget"],
   "entryPoints": {
     "barWidget": "Panel.qml"
   },
@@ -19,15 +17,14 @@
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {
-      "schemas": [
-        "rime_ice"
-      ],
+      "schemas": ["rime_ice"],
       "annotation": false,
       "annotateChinese": true,
       "annotateEnglish": true,
       "annotateShowPinyin": false,
       "annotateHotkey": "Control+e",
       "traditionalize": true,
+      "qtImModule": true,
       "pageSize": 10,
       "verticalCandidates": true,
       "backgroundImageLight": "",
@@ -43,9 +40,7 @@
         "noSelectionText": "Rime Ice only",
         "placeholderText": "Search schemas...",
         "emptyText": "No schemas",
-        "defaultValue": [
-          "rime_ice"
-        ],
+        "defaultValue": ["rime_ice"],
         "options": [
           {
             "value": "rime_ice",
@@ -199,6 +194,13 @@
         "label": "Vertical candidate list",
         "defaultValue": true,
         "description": "Stack candidates vertically instead of in a row."
+      },
+      {
+        "key": "qtImModule",
+        "type": "boolean",
+        "label": "Input method for XWayland Qt apps",
+        "defaultValue": true,
+        "description": "Sets QT_IM_MODULE=fcitx so XWayland Qt applications such as WeChat can type Chinese. Turn it off only if a native Wayland Qt surface misbehaves. Takes effect at the next login."
       },
       {
         "key": "backgroundImageLight",

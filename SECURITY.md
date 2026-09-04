@@ -11,15 +11,14 @@ There is no sandbox here. This is a bar widget plus a Python command line, both
 running as the desktop user. What follows is an account of a small blast radius,
 not of an isolated one.
 
-
 ## What runs, and where
 
-| Piece | What it is | When it runs |
-|---|---|---|
-| `Panel.qml` | The bar widget | While the bar is up |
-| `ime-manager` | A Python 3 command line, stdlib only | When a person or the panel asks it to |
-| `~/.config/omarchy/hooks/theme-set.d/ryuhzk.ime` | A three-line shell shim, installed only on request | On every Omarchy theme change |
-| `payload/rime/lua/annotate.lua` | A librime-lua filter | Inside `fcitx5`, on every keystroke while composing |
+| Piece                                            | What it is                                         | When it runs                                        |
+| ------------------------------------------------ | -------------------------------------------------- | --------------------------------------------------- |
+| `Panel.qml`                                      | The bar widget                                     | While the bar is up                                 |
+| `ime-manager`                                    | A Python 3 command line, stdlib only               | When a person or the panel asks it to               |
+| `~/.config/omarchy/hooks/theme-set.d/ryuhzk.ime` | A three-line shell shim, installed only on request | On every Omarchy theme change                       |
+| `payload/rime/lua/annotate.lua`                  | A librime-lua filter                               | Inside `fcitx5`, on every keystroke while composing |
 
 `Panel.qml` performs no filesystem writes at all. Everything the plugin does to
 a machine goes through `ime-manager`, which is one file tree to audit rather
@@ -27,20 +26,19 @@ than two. The panel's only privilege is to run `ime-manager` and a handful of
 read-only queries (`fcitx5-remote`, `gdbus call … GetCurrentSchema`), each as an
 argument vector; there is no shell anywhere in the plugin.
 
-
 ## What it writes
 
 `ime-manager deploy` writes into exactly five directories, and records every
 file it writes in an install manifest so that `ime-manager uninstall` can undo
 it:
 
-| Target | Directory |
-|---|---|
-| `rime` | `$XDG_DATA_HOME/fcitx5/rime` |
-| `fcitx5` | `$XDG_CONFIG_HOME/fcitx5` |
-| `themes` | `$XDG_DATA_HOME/fcitx5/themes/omarchy-ime` |
-| `environment` | `$XDG_CONFIG_HOME/environment.d/10-omarchy-fcitx.conf` |
-| `hooks` | `$XDG_CONFIG_HOME/omarchy/hooks/theme-set.d/ryuhzk.ime` |
+| Target        | Directory                                               |
+| ------------- | ------------------------------------------------------- |
+| `rime`        | `$XDG_DATA_HOME/fcitx5/rime`                            |
+| `fcitx5`      | `$XDG_CONFIG_HOME/fcitx5`                               |
+| `themes`      | `$XDG_DATA_HOME/fcitx5/themes/omarchy-ime`              |
+| `environment` | `$XDG_CONFIG_HOME/environment.d/10-omarchy-fcitx.conf`  |
+| `hooks`       | `$XDG_CONFIG_HOME/omarchy/hooks/theme-set.d/ryuhzk.ime` |
 
 It also writes `$XDG_CONFIG_HOME/omarchy/shell.json` — its own entry on the bar,
 and only the keys it was asked to change — and caches downloads under
@@ -81,7 +79,6 @@ directory, created with `O_EXCL | O_NOFOLLOW` so that a symlink planted at the
 predictable `shell.json.<pid>.tmp` cannot redirect the write, and with the
 mode the existing file had so that a save never tightens or loosens it.
 
-
 ## The install manifest is validated when it is read
 
 This is the part most worth a reviewer's attention, because it is the part that
@@ -108,7 +105,6 @@ naming a `backup` outside the backup directory was an arbitrary read followed by
 an arbitrary write. `tests/test_security.py::HostileManifestTests` covers each of
 those, plus the deploy-time stale-file sweep, which is the manifest's other
 reader.
-
 
 ## What it downloads
 
@@ -161,7 +157,6 @@ the dictionary with `io.open` and contains no `load`, `loadstring`, `loadfile`,
 `dofile`, `require`, `os.execute` or `io.popen`. Both halves of that are
 asserted in `tests/test_security.py::HostileUpstreamTests`.
 
-
 ## The annotation filter runs on the input path
 
 `annotate.lua` is the one piece of this plugin that runs inside `fcitx5`, on the
@@ -184,7 +179,6 @@ The filter decodes no UTF-8: every test it makes is a byte-class test, so
 invalid sequences are skipped rather than raising. Gloss width is capped at 54
 columns because `classicui` has no wrap or elide option and sizes its window to
 whatever it is asked to draw.
-
 
 ## Settings are data, everywhere they land
 
@@ -219,7 +213,6 @@ point where it lands in a file another program parses:
 `tests/test_security.py::HostileSettingsTests` and `HostileThemeNameTests` cover
 these.
 
-
 ## The D-Bus surface
 
 `lib/imestate` talks to `fcitx5` through `gdbus call` and reads the GVariant
@@ -231,11 +224,10 @@ for". A schema id off the bus is then held to the character class above before
 it names a file. `tests/test_security.py::BusReplyTests` feeds it the shapes
 that would matter if it were an `eval`.
 
-Arguments *to* `gdbus` are quoted as GVariant string literals
+Arguments _to_ `gdbus` are quoted as GVariant string literals
 (`imestate.quote_variant`) so that a schema called `true` arrives as a string
 rather than a boolean. That is about the type, not about metacharacters: the
 argument list is handed to `execve`, and no shell is involved.
-
 
 ## The theme hook
 
@@ -251,7 +243,6 @@ inside double quotes.
 Installing the hook is part of the plugin's lifecycle, so it is recorded in the
 same manifest as everything else and `ime-manager uninstall` takes it away. No
 hook is left behind pointing at a plugin that is gone.
-
 
 ## What this plugin deliberately does not do
 
@@ -274,7 +265,7 @@ hook is left behind pointing at a plugin that is gone.
   anywhere.** Every subprocess is an argument vector.
   `tests/test_security.py::SubprocessSurfaceTests` scans `lib/`, `ime-manager`
   and `Panel.qml` for all four, and asserts that the scan really matched those
-  files. The single place the plugin composes shell *text* is
+  files. The single place the plugin composes shell _text_ is
   `packages.install_script`, a one-liner for a terminal launcher that takes one;
   every package name in it is filtered against the plugin's own constant lists
   before it is `shlex.quote`d, so nothing a caller passes can reach it.
@@ -285,12 +276,11 @@ hook is left behind pointing at a plugin that is gone.
 - **No telemetry, no analytics, no network call other than the three fetches
   described above.**
 
-
 ## Known limits
 
 Stated because they are real, not because they are comfortable.
 
-- **What a hostile *pinned* Rime source can do inside librime is not bounded by
+- **What a hostile _pinned_ Rime source can do inside librime is not bounded by
   this plugin.** The fetch is content-addressed and the file list is a
   whitelist, and this plugin has verified that no fetched file is Lua and that
   none is a symlink or absurdly large. But a `.dict.yaml` or `.schema.yaml` is
@@ -298,7 +288,7 @@ Stated because they are real, not because they are comfortable.
   either of those can be made to write outside the Rime directory by a crafted
   `dictionary:` or `import_tables:` name has **not** been verified here. The
   practical protection is that changing what those files say requires either
-  compromising the two upstream repositories *and* a maintainer bumping the pin
+  compromising the two upstream repositories _and_ a maintainer bumping the pin
   after reading the diff, or a SHA-1 collision.
 - **A same-uid attacker is not defended against in general.** The measures above
   — validating the manifest on read, refusing to follow symlinks at
@@ -320,7 +310,6 @@ Stated because they are real, not because they are comfortable.
 - **`SECURITY.md` describes the tree as it stands.** If a claim here and the
   code disagree, the code is the fact and the claim is the bug — please report
   it as one.
-
 
 ## Reporting a vulnerability
 

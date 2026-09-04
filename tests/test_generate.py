@@ -893,12 +893,28 @@ class EnvironmentTests(unittest.TestCase):
         self.assertEqual(generate.ENVIRONMENT_PATH, "10-omarchy-fcitx.conf")
         self.assertEqual(generate.PACKAGED_ENVIRONMENT.name, generate.ENVIRONMENT_PATH)
 
-    def test_qt_im_module_is_not_set(self):
-        self.assertNotIn("QT_IM_MODULE", self.assignments(self.rendered()))
+    def rendered_off(self, packaged=None) -> str:
+        files = generate.render_environment(packaged or self.stock,
+                                            set_qt_im_module=False)
+        return files[generate.ENVIRONMENT_PATH]
+
+    def test_qt_im_module_is_set_by_default(self):
+        # The default serves XWayland Qt apps such as WeChat, which cannot use
+        # the native protocol and get no input method without it.
+        self.assertEqual(
+            self.assignments(self.rendered())["QT_IM_MODULE"], "fcitx")
+
+    def test_qt_im_module_is_dropped_when_the_setting_is_off(self):
+        self.assertNotIn("QT_IM_MODULE", self.assignments(self.rendered_off()))
+
+    def test_it_is_added_when_wanted_even_if_the_packaged_file_lacks_it(self):
+        packaged = self.packaged("INPUT_METHOD=fcitx", "XMODIFIERS=@im=fcitx")
+        self.assertEqual(
+            self.assignments(self.rendered(packaged))["QT_IM_MODULE"], "fcitx")
 
     def test_the_other_packaged_variables_survive(self):
         self.assertEqual(
-            self.assignments(self.rendered()),
+            self.assignments(self.rendered_off()),
             {
                 "INPUT_METHOD": "fcitx",
                 "XMODIFIERS": "@im=fcitx",
@@ -916,7 +932,7 @@ class EnvironmentTests(unittest.TestCase):
             "XMODIFIERS=@im=fcitx",
         )
         self.assertEqual(
-            self.assignments(self.rendered(packaged)),
+            self.assignments(self.rendered_off(packaged)),
             {
                 "INPUT_METHOD": "fcitx",
                 "GLFW_IM_MODULE": "ibus",
@@ -926,13 +942,13 @@ class EnvironmentTests(unittest.TestCase):
 
     def test_comments_and_blank_lines_in_the_packaged_file_are_not_copied(self):
         packaged = self.packaged("# packaged header", "", "INPUT_METHOD=fcitx")
-        self.assertEqual(self.assignments(self.rendered(packaged)),
+        self.assertEqual(self.assignments(self.rendered_off(packaged)),
                          {"INPUT_METHOD": "fcitx"})
 
     def test_a_missing_packaged_file_falls_back_to_the_known_variables(self):
         missing = Path(self._tmp.name) / "not-here.conf"
         self.assertEqual(
-            self.assignments(self.rendered(missing)),
+            self.assignments(self.rendered_off(missing)),
             {
                 "INPUT_METHOD": "fcitx",
                 "XMODIFIERS": "@im=fcitx",
@@ -942,12 +958,19 @@ class EnvironmentTests(unittest.TestCase):
 
     def test_the_diagnosis_that_produced_the_file_survives_in_it(self):
         # The reason is the whole value of the file: without it the next reader
-        # sees a variable missing for no stated reason and puts it back.
+        # sees a variable set or unset for no stated reason and changes it.
         text = self.rendered()
-        self.assertIn("Wayland native input method protocol", text)
+        self.assertIn("text-input-v3", text)
         self.assertIn("QT_IM_MODULE=fcitx", text)
         self.assertIn("focus race", text)
         self.assertIn("layer-shell", text)
+        self.assertIn("XWayland", text)
+
+    def test_the_active_choice_is_recorded_in_the_file(self):
+        # A reader must be able to tell which way this deploy set it without
+        # running the plugin.
+        self.assertIn("qtImModule is ON", self.rendered())
+        self.assertIn("qtImModule is OFF", self.rendered_off())
 
     def test_every_explanatory_line_is_a_comment(self):
         for line in self.rendered().splitlines():

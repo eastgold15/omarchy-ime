@@ -609,8 +609,12 @@ class EnvironmentDeployTests(DeployCase):
         self.assertEqual(len(backups), 1)
         self.assertIn("# mine", backups[0].read_text())
 
-    def test_the_deployed_file_leaves_qt_im_module_unset(self):
+    def test_the_deployed_file_sets_qt_im_module_by_default(self):
         self._deploy()
+        self.assertIn("\nQT_IM_MODULE=fcitx", self.installed().read_text())
+
+    def test_qt_im_module_is_left_unset_when_the_setting_is_off(self):
+        self._deploy(qtImModule=False)
         self.assertNotIn("\nQT_IM_MODULE=", self.installed().read_text())
 
     def test_it_carries_the_packaged_variables_it_did_not_drop(self):

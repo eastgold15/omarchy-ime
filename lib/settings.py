@@ -183,6 +183,12 @@ DEFAULTS = {
     "annotateShowPinyin": (False, bool, None),
     "annotateHotkey": ("Control+e", str, None),
     "traditionalize": (True, bool, None),
+    # Set QT_IM_MODULE=fcitx in the environment override. XWayland Qt apps
+    # (WeChat) need it to reach Fcitx5 at all; native Wayland Qt apps prefer it
+    # unset. One global value cannot be both, so this chooses. On by default -
+    # an XWayland app that types only latin is the more visible failure. Takes
+    # effect at the next login. See lib/generate.render_environment.
+    "qtImModule": (True, bool, None),
     "pageSize": (10, int, (1, 10)),
     "verticalCandidates": (True, bool, None),
     "backgroundImageLight": ("", ImagePath, None),

@@ -766,13 +766,17 @@ def deploy(settings: dict, targets: dict[str, Path], state_dir: Path, payload_di
     # The environment override. systemd reads environment.d at session start, so
     # this is the one deployed file that does nothing until the next login - the
     # deploy says so rather than letting the user conclude it did not work.
-    for relative, text in sorted(generate.render_environment().items()):
+    qt_im_module = bool(effective["qtImModule"])
+    environment = generate.render_environment(set_qt_im_module=qt_im_module)
+    for relative, text in sorted(environment.items()):
         install(ENVIRONMENT_TARGET, relative, writer(text))
     if ENVIRONMENT_TARGET in written:
         announce(
-            "environment: QT_IM_MODULE is unset for Qt applications;"
-            " this takes effect at your next login"
+            "environment: QT_IM_MODULE=fcitx is set for Qt applications"
+            if qt_im_module
+            else "environment: QT_IM_MODULE is unset for Qt applications"
         )
+        announce("environment: this takes effect at your next login")
 
     for name, text in sorted(_resolve_theme(theme_source, notice)["files"].items()):
         install(THEME_TARGET, f"{theme_lib.DIRECTORY}/{name}", writer(text))

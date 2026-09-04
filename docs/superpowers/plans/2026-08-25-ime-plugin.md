@@ -30,9 +30,11 @@ parallel. Task 3 needs Task 2. Task 4 needs Task 3. Task 9 needs Tasks 2-8.
 ### Task 1: Repository skeleton and test runner
 
 **Files:**
+
 - Create: `ime-manager`, `lib/__init__.py`, `check`, `tests/test_smoke.py`, `.gitignore`, `README.md`
 
 **Interfaces:**
+
 - Produces: `./check` runs the whole suite; `ime-manager <command>` dispatches subcommands.
 
 - [ ] **Step 1: Write the failing test**
@@ -118,9 +120,11 @@ git commit -m "feat: repository skeleton and test runner"
 ### Task 2: Settings resolution
 
 **Files:**
+
 - Create: `lib/settings.py`, `tests/test_settings.py`
 
 **Interfaces:**
+
 - Produces: `DEFAULTS: dict`, `resolve(raw: dict) -> dict`, `load(shell_json_path: Path) -> dict`
 
 - [ ] **Step 1: Write the failing test**
@@ -286,9 +290,11 @@ git commit -m "feat: resolve and load plugin settings"
 ### Task 3: Rime configuration generation
 
 **Files:**
+
 - Create: `lib/generate.py`, `tests/test_generate.py`
 
 **Interfaces:**
+
 - Consumes: `lib.settings.resolve`
 - Produces: `render(settings: dict) -> dict[str, str]` mapping relative path to file content.
 
@@ -458,10 +464,12 @@ git commit -m "feat: generate Rime customization from settings"
 ### Task 4: Deployment with an install manifest
 
 **Files:**
+
 - Create: `lib/deploy.py`, `tests/test_deploy.py`
 - Modify: `ime-manager`
 
 **Interfaces:**
+
 - Consumes: `lib.generate.render`
 - Produces: `deploy(settings, rime_dir, state_dir, payload_dir) -> list[str]`, `uninstall(state_dir) -> list[str]`
 
@@ -671,9 +679,11 @@ git commit -m "feat: deploy configuration and track what was installed"
 ### Task 5: Package management
 
 **Files:**
+
 - Create: `lib/packages.py`, `tests/test_packages.py`
 
 **Interfaces:**
+
 - Produces: `REQUIRED: list[str]`, `AUR: list[str]`, `missing(runner) -> list[str]`, `install(names, runner) -> bool`
 
 `runner` is a callable taking a command list and returning `(returncode, stdout)`, so tests
@@ -812,9 +822,11 @@ git commit -m "feat: detect and install required packages"
 ### Task 6: Pinned asset fetching
 
 **Files:**
+
 - Create: `lib/assets.py`, `tests/test_assets.py`, `sources/rime-japanese.rev`, `sources/rime-snomiao.rev`
 
 **Interfaces:**
+
 - Produces: `SOURCES: dict`, `cache_path(name, revision, cache_root) -> Path`, `ensure(name, cache_root, fetcher) -> Path | None`
 
 - [ ] **Step 1: Write the failing test**
@@ -968,9 +980,11 @@ git commit -m "feat: fetch pinned external sources into a cache"
 ### Task 7: Dictionary builder
 
 **Files:**
+
 - Create: `tools/build-dict.py`, `tests/test_build_dict.py`, `tests/fixtures/cedict-sample.u8`
 
 **Interfaces:**
+
 - Produces: `parse_line(line: str) -> tuple | None`, `build(lines) -> str`
 
 Output format is one entry per line: `traditional<TAB>simplified<TAB>pinyin<TAB>gloss1; gloss2`.
@@ -1124,9 +1138,11 @@ git commit -m "feat: convert CC-CEDICT into the annotation dictionary"
 ### Task 8: Lua annotation filter
 
 **Files:**
+
 - Create: `payload/rime/lua/annotate.lua`, `tests/test_annotate_lua.py`, `tests/fixtures/dict-sample.txt`
 
 **Interfaces:**
+
 - Produces: a Lua module exposing `load_dictionary(path)`, `gloss_for(entry, text, show_pinyin)`, and `filter(input, env)`.
 
 The Python test shells out to `lua` so the filter is exercised as Lua, not as a
@@ -1312,10 +1328,12 @@ git commit -m "feat: annotate candidates with the other language"
 ### Task 9: Plugin manifest and panel
 
 **Files:**
+
 - Create: `manifest.json`, `Panel.qml`
 - Modify: `README.md`
 
 **Interfaces:**
+
 - Consumes: `ime-manager status --json`, `ime-manager deploy`, `ime-manager packages install`
 
 - [ ] **Step 1: Write the failing test**
@@ -1392,10 +1410,12 @@ git commit -m "feat: plugin manifest and bar panel"
 ### Task 10: Input state indicator and switcher
 
 **Files:**
+
 - Create: `lib/imestate.py`, `tests/test_imestate.py`
 - Modify: `Panel.qml`, `ime-manager`
 
 **Interfaces:**
+
 - Produces: `read(runner) -> dict` with keys `state` (`"closed"|"latin"|"active"`),
   `method` (str or None), `group` (str or None); `switch(name, runner) -> bool`
 
@@ -1534,6 +1554,7 @@ git commit -m "feat: show and switch the live input state from the bar"
 ### Task 11: Adopt on this machine and retire the dotfiles module
 
 **Files:**
+
 - Modify: `~/.dotfiles/install`, `~/.dotfiles/check`, `~/.dotfiles/packages/official.txt`, `~/.dotfiles/packages/aur.txt`
 - Delete: `~/.dotfiles/config/fcitx5/`, `~/.dotfiles/share/fcitx5/`, `~/.dotfiles/sources/rime-*.rev`
 

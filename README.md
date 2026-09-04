@@ -21,7 +21,7 @@ Plugin id: `ryuhzk.ime`.
 - **Bidirectional candidate annotation** (optional, off by default) — an
   English gloss on Chinese candidates, a Chinese gloss on English ones, both
   behind one Rime switch toggled by a hotkey scoped to composing. Turn it on
-  with the *Candidate annotation* switch in the panel or
+  with the _Candidate annotation_ switch in the panel or
   `ime-manager settings set annotation=true`
 - **Input-state indicator** — the bar shows the live Fcitx5 state rather than
   the keyboard layout, and takes the place of `omarchy.keyboard-layout`. It
@@ -71,13 +71,13 @@ Plugin id: `ryuhzk.ime`.
 You do **not** need to install the input method yourself. The plugin installs its
 own packages through Omarchy's package commands:
 
-| Package | Source | Command used |
-|---|---|---|
-| `fcitx5` | official | `omarchy pkg add` |
-| `fcitx5-configtool` | official | `omarchy pkg add` |
-| `fcitx5-rime` | official | `omarchy pkg add` |
-| `noto-fonts-cjk` | official | `omarchy pkg add` |
-| `rime-ice-git` | AUR | `omarchy pkg aur add` |
+| Package             | Source   | Command used          |
+| ------------------- | -------- | --------------------- |
+| `fcitx5`            | official | `omarchy pkg add`     |
+| `fcitx5-configtool` | official | `omarchy pkg add`     |
+| `fcitx5-rime`       | official | `omarchy pkg add`     |
+| `noto-fonts-cjk`    | official | `omarchy pkg add`     |
+| `rime-ice-git`      | AUR      | `omarchy pkg aur add` |
 
 `noto-fonts-cjk` is an Omarchy base package, so on Omarchy it is already there.
 It is listed because the generated `conf/classicui.conf` names one of its faces
@@ -224,7 +224,7 @@ folding them into a count.
 Then it asks Rime to rebuild, and checks that it did. Writing the files is only
 half a deploy: Rime reads its customization files at build time, not at
 keystroke time, so a file on disk that has not been compiled is a file that is
-not in effect — and one Rime *refuses* to compile takes the whole schema down
+not in effect — and one Rime _refuses_ to compile takes the whole schema down
 with it, which is how a single malformed patch key can cost you your input
 method while every test still passes.
 
@@ -477,20 +477,20 @@ file, and Omarchy hot-reloads that file on save. Every key is optional: a
 defaults rather than an error, and a value of the wrong type falls back to its
 default so a typo cannot stop the input method from deploying.
 
-| Key | Default | What it does |
-|---|---|---|
-| `schemas` | `["rime_ice"]` | Which Rime schemas are written to `schema_list` and deployed. A collapsed multi-select over everything this Rime install offers — full pinyin, seven double-pinyin layouts, zhuyin, shape codes, Japanese. Names are read from each schema's own yaml, never hard-coded. Deselecting one removes its files on the next deploy; the Japanese schemas also stop fetching their pinned sources. At least one Chinese schema always survives. |
-| `annotation` | `false` | The master switch over candidate annotation. Off by default: a fresh install ships Rime Ice with nothing extra. On installs the Lua filter, downloads CC-CEDICT, and patches every selected Chinese schema with the filter, its switch and the hotkey binding; off installs none of that and removes it on the next deploy, leaving the cached dictionary alone. The four `annotate*` settings below keep their values while it is off. |
-| `annotateChinese` | `true` | English glosses on Chinese candidates. Written into the schema as `annotate/chinese`. |
-| `annotateEnglish` | `true` | Chinese glosses on English candidates. Written into the schema as `annotate/english`. With both directions off, the filter, its switch, and the hotkey binding are not written at all. |
-| `annotateShowPinyin` | `false` | Prefixes the gloss with the candidate pinyin. Off by default: the gloss is the point, and the pinyin is already in what you just typed. |
-| `annotateHotkey` | `Control+e` | The key that toggles the annotation switch. Bound `when: composing` — see below. |
-| `traditionalize` | `true` | Sets `traditionalize/opencc_config` to `s2twp.json`, so output is Taiwan-style traditional. Off omits the patch entirely. |
-| `pageSize` | `10` | Candidates per page (`menu/page_size`). Accepted range 1–10: a hand edit outside it is clamped into range, while `ime-manager settings set` refuses it outright rather than writing back a number you never asked for. |
-| `verticalCandidates` | `true` | Candidates render vertically. Two keys, because two frontends own the answer: Rime's `style/horizontal`, which is what Squirrel and Weasel read, and classicui's `Vertical Candidate List` in `conf/classicui.conf`, which is what draws the window under Fcitx5. The second is the one that acts here, and it is why that file is generated rather than shipped — it used to be a fixed payload file pinned to `True`, so the switch was wired to a key with no reader and turning it off did nothing. |
-| `backgroundImageLight` | `""` | Absolute path to an image drawn behind the candidates while a *light* Omarchy theme is active. Empty means the theme's own background colour. |
-| `backgroundImageDark` | `""` | The same for a *dark* theme. Two keys rather than one because the candidate window follows whichever theme is switched on, and an image picked against a dark theme is unreadable under a light one. Accepted formats are `.png`, `.svg`, `.svgz`, `.jpg`, `.jpeg`, `.jpe`, `.webp`, `.bmp` and `.gif`; the path is expanded and made absolute on write, and both the extension and the file's own first bytes are checked, because the candidate window picks its loader from the extension and would silently never load a file whose contents disagree with its name. |
-| `panelWidth` | `420` | How wide the popup panel is, in the layout units `Style.space` scales by the theme's spacing. Measured from the content rather than picked: the widest row is a setting with its control on the trailing edge, and its label has to fit beside it. Accepted range 400–720; the lower bound is the narrowest panel at which no label elides. |
+| Key                    | Default        | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `schemas`              | `["rime_ice"]` | Which Rime schemas are written to `schema_list` and deployed. A collapsed multi-select over everything this Rime install offers — full pinyin, seven double-pinyin layouts, zhuyin, shape codes, Japanese. Names are read from each schema's own yaml, never hard-coded. Deselecting one removes its files on the next deploy; the Japanese schemas also stop fetching their pinned sources. At least one Chinese schema always survives.                                                                                                                                |
+| `annotation`           | `false`        | The master switch over candidate annotation. Off by default: a fresh install ships Rime Ice with nothing extra. On installs the Lua filter, downloads CC-CEDICT, and patches every selected Chinese schema with the filter, its switch and the hotkey binding; off installs none of that and removes it on the next deploy, leaving the cached dictionary alone. The four `annotate*` settings below keep their values while it is off.                                                                                                                                  |
+| `annotateChinese`      | `true`         | English glosses on Chinese candidates. Written into the schema as `annotate/chinese`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `annotateEnglish`      | `true`         | Chinese glosses on English candidates. Written into the schema as `annotate/english`. With both directions off, the filter, its switch, and the hotkey binding are not written at all.                                                                                                                                                                                                                                                                                                                                                                                   |
+| `annotateShowPinyin`   | `false`        | Prefixes the gloss with the candidate pinyin. Off by default: the gloss is the point, and the pinyin is already in what you just typed.                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `annotateHotkey`       | `Control+e`    | The key that toggles the annotation switch. Bound `when: composing` — see below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `traditionalize`       | `true`         | Sets `traditionalize/opencc_config` to `s2twp.json`, so output is Taiwan-style traditional. Off omits the patch entirely.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `pageSize`             | `10`           | Candidates per page (`menu/page_size`). Accepted range 1–10: a hand edit outside it is clamped into range, while `ime-manager settings set` refuses it outright rather than writing back a number you never asked for.                                                                                                                                                                                                                                                                                                                                                   |
+| `verticalCandidates`   | `true`         | Candidates render vertically. Two keys, because two frontends own the answer: Rime's `style/horizontal`, which is what Squirrel and Weasel read, and classicui's `Vertical Candidate List` in `conf/classicui.conf`, which is what draws the window under Fcitx5. The second is the one that acts here, and it is why that file is generated rather than shipped — it used to be a fixed payload file pinned to `True`, so the switch was wired to a key with no reader and turning it off did nothing.                                                                  |
+| `backgroundImageLight` | `""`           | Absolute path to an image drawn behind the candidates while a _light_ Omarchy theme is active. Empty means the theme's own background colour.                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `backgroundImageDark`  | `""`           | The same for a _dark_ theme. Two keys rather than one because the candidate window follows whichever theme is switched on, and an image picked against a dark theme is unreadable under a light one. Accepted formats are `.png`, `.svg`, `.svgz`, `.jpg`, `.jpeg`, `.jpe`, `.webp`, `.bmp` and `.gif`; the path is expanded and made absolute on write, and both the extension and the file's own first bytes are checked, because the candidate window picks its loader from the extension and would silently never load a file whose contents disagree with its name. |
+| `panelWidth`           | `420`          | How wide the popup panel is, in the layout units `Style.space` scales by the theme's spacing. Measured from the content rather than picked: the widest row is a setting with its control on the trailing edge, and its label has to fit beside it. Accepted range 400–720; the lower bound is the narrowest panel at which no label elides.                                                                                                                                                                                                                              |
 
 Only these keys are read; anything else on the widget entry is ignored — including
 `englishInput`, which earlier versions accepted. There was never a way to make it
@@ -531,7 +531,7 @@ deploy; each carries a header saying so. Change the settings instead.
 
 ## Candidate annotation
 
-Off by default. Turn it on with the *Candidate annotation* switch in the panel
+Off by default. Turn it on with the _Candidate annotation_ switch in the panel
 or `ime-manager settings set annotation=true`, then deploy. While it is off
 nothing of the feature reaches the machine: no `lua/annotate.lua` in the Rime
 directory, no CC-CEDICT download, and no annotation filter, switch or hotkey
@@ -550,7 +550,7 @@ toggle two switches, so a second binding on the same key would have been dead
 weight. (Measured against librime 1.17.0, a later binding wins over an earlier
 one — which is why appending the hotkey works even on the schemas whose presets
 already bind `Control+e` to end-of-line.) The hotkey answers
-"show glosses right now"; *which* direction to gloss is a deploy-time setting
+"show glosses right now"; _which_ direction to gloss is a deploy-time setting
 (`annotateChinese` and `annotateEnglish`), because nobody changes their mind
 about that mid-word. The switch is written with `reset: 1`, so it starts on.
 
@@ -633,7 +633,7 @@ different answer from "no".
 
 ### The toggle
 
-Under Omarchy, put this in `~/.config/hypr/input.lua`. It is a key *handler*
+Under Omarchy, put this in `~/.config/hypr/input.lua`. It is a key _handler_
 rather than a bind, because Fcitx5 does not receive modifier-only release events
 reliably through the Wayland input-method protocol:
 
@@ -698,7 +698,7 @@ decoration {
 ### How each one is detected
 
 The blur rule is read from the running compositor with
-`hyprctl getoption decoration:blur:input_methods`, which reports the *effective*
+`hyprctl getoption decoration:blur:input_methods`, which reports the _effective_
 value whatever file set it — so a rule from a theme override, an Omarchy Lua
 module or a drop-in all read the same. Careful if you go poking at it yourself:
 `hyprctl` answers an option it does not know with the words "no such option" and
@@ -751,25 +751,25 @@ there is nothing to convert and nothing to publish.
 
 An honest accounting of what runs today.
 
-| Area | State |
-|---|---|
-| Repository skeleton and the `./check` test runner | Done |
-| Settings resolution and persistence (`lib/settings.py`) | Done |
-| Feature declarations — what annotation and Japanese input each install, fetch, own and patch (`lib/features.py`) | Done — one record per feature; deploy, generate and assets read it instead of tables of their own |
-| Rime configuration generation (`lib/generate.py`) | Done |
-| Package detection and installation (`lib/packages.py`) | Done |
-| Asset fetching — Japanese sources pinned by commit, dictionary tracked against upstream (`lib/assets.py`) | Done |
-| Lua annotation filter (`payload/rime/lua/annotate.lua`) | Done |
-| Input state read and switch (`lib/imestate.py`) | Done |
-| Deploy, uninstall, backups, and the install manifest (`lib/deploy.py`) | Done |
-| Rime rebuild after a deploy, verified against the journal (`lib/deploy.py`) | Done |
-| Candidate window theme generated from the Omarchy palette (`lib/theme.py`) | Done |
-| Omarchy theme-set hook, install and removal (`lib/hooks.py`) | Done |
-| The `QT_IM_MODULE` environment override (`lib/generate.py`) | Done — deployed, backed up, and removed by uninstall |
-| Detecting the two Hyprland pieces (`lib/hyprland.py`) | Done — reported, never written |
-| `manifest.json` and `Panel.qml` — the bar widget and its settings UI | Done |
-| `ime-manager` subcommands (`deploy`, `uninstall`, `packages`, `status`, `state`, `settings`, `schema`, `theme`, `hook`) | Done |
-| Annotation dictionary download | Done — CC-CEDICT is fetched from MDBG on deploy, cached at `~/.cache/omarchy-ime/dictionary/`, and refreshed once it is 30 days old |
+| Area                                                                                                                    | State                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Repository skeleton and the `./check` test runner                                                                       | Done                                                                                                                                |
+| Settings resolution and persistence (`lib/settings.py`)                                                                 | Done                                                                                                                                |
+| Feature declarations — what annotation and Japanese input each install, fetch, own and patch (`lib/features.py`)        | Done — one record per feature; deploy, generate and assets read it instead of tables of their own                                   |
+| Rime configuration generation (`lib/generate.py`)                                                                       | Done                                                                                                                                |
+| Package detection and installation (`lib/packages.py`)                                                                  | Done                                                                                                                                |
+| Asset fetching — Japanese sources pinned by commit, dictionary tracked against upstream (`lib/assets.py`)               | Done                                                                                                                                |
+| Lua annotation filter (`payload/rime/lua/annotate.lua`)                                                                 | Done                                                                                                                                |
+| Input state read and switch (`lib/imestate.py`)                                                                         | Done                                                                                                                                |
+| Deploy, uninstall, backups, and the install manifest (`lib/deploy.py`)                                                  | Done                                                                                                                                |
+| Rime rebuild after a deploy, verified against the journal (`lib/deploy.py`)                                             | Done                                                                                                                                |
+| Candidate window theme generated from the Omarchy palette (`lib/theme.py`)                                              | Done                                                                                                                                |
+| Omarchy theme-set hook, install and removal (`lib/hooks.py`)                                                            | Done                                                                                                                                |
+| The `QT_IM_MODULE` environment override (`lib/generate.py`)                                                             | Done — deployed, backed up, and removed by uninstall                                                                                |
+| Detecting the two Hyprland pieces (`lib/hyprland.py`)                                                                   | Done — reported, never written                                                                                                      |
+| `manifest.json` and `Panel.qml` — the bar widget and its settings UI                                                    | Done                                                                                                                                |
+| `ime-manager` subcommands (`deploy`, `uninstall`, `packages`, `status`, `state`, `settings`, `schema`, `theme`, `hook`) | Done                                                                                                                                |
+| Annotation dictionary download                                                                                          | Done — CC-CEDICT is fetched from MDBG on deploy, cached at `~/.cache/omarchy-ime/dictionary/`, and refreshed once it is 30 days old |
 
 Three pieces of a working setup live outside the files this plugin generates.
 One of them it now owns: the `QT_IM_MODULE` override in
@@ -820,7 +820,7 @@ never redistributes it: it downloads the published file onto your machine,
 unmodified, and reads it there — so the attribution and share-alike obligations
 stay with the file and its publisher, exactly where they belong. Nothing in
 this repository is a derived work of it, `tests/fixtures/cedict-sample.u8`
-included: that is a fixture written for these tests in CC-CEDICT's *format*,
+included: that is a fixture written for these tests in CC-CEDICT's _format_,
 containing none of its entries. Both this README and the plugin's panel name
 the source.
 

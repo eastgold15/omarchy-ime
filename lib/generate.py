@@ -477,20 +477,21 @@ ENVIRONMENT_HEADER = """\
 # file's own name in a directory systemd reads later. Nothing here reaches a
 # session that is already running: it takes effect at your next login.
 #
-# Every variable below is copied from the packaged file unchanged. The one
-# difference is that QT_IM_MODULE is deliberately not set. fcitx5 prints this
-# in its own self-diagnosis:
+# Most variables are copied from the packaged file unchanged. QT_IM_MODULE is
+# the one this plugin decides, because Fcitx5 reaches a Qt application two ways
+# and they suit different applications:
 #
-#   Using Wayland native input method protocol: 1
-#   GTK_IM_MODULE=
-#   QT_IM_MODULE=fcitx
+#   - A native Wayland Qt app (the text-input-v3 protocol) needs QT_IM_MODULE
+#     UNSET. Setting it puts a second route live at the same time, and a
+#     layer-shell surface then gets whichever wins the focus race - which is
+#     why typing into one once worked only sometimes.
+#   - An XWayland Qt app cannot speak that protocol at all. WeChat is one: with
+#     QT_IM_MODULE unset it gets no input method and types latin only. It needs
+#     QT_IM_MODULE=fcitx to reach Fcitx5 through the DBus/XIM route.
 #
-# The native protocol (text-input-v3) is up and GTK already uses it, but
-# QT_IM_MODULE=fcitx forces Qt down the older DBus input-context path instead.
-# With both routes live, a layer-shell surface such as an Omarchy panel gets
-# whichever one wins the focus race, which is why typing Chinese into one
-# worked only sometimes. Leaving QT_IM_MODULE unset puts Qt on the same native
-# protocol as GTK.
+# One global variable cannot be both. The `qtImModule` setting chooses; the
+# line below records the choice this deploy made. The default sets it, because
+# an XWayland app typing nothing but latin is the more visible failure.
 #
 # The rest stay for reasons of their own: XMODIFIERS is what XWayland and
 # Qt-on-xcb fall back to, and SDL_IM_MODULE and INPUT_METHOD have no
@@ -516,17 +517,33 @@ def packaged_environment(path=None) -> list[str]:
             if _ASSIGNMENT.fullmatch(line.strip())]
 
 
-def render_environment(packaged=None) -> dict[str, str]:
+def render_environment(packaged=None, *, set_qt_im_module: bool = True) -> dict[str, str]:
     """Return the environment override, keyed by its relative path.
 
     `packaged` is where the packaged file lives; it is an argument so that
     rendering stays a function of what it is handed, and so no test reads
     /usr/lib.
+
+    `set_qt_im_module` keeps QT_IM_MODULE from the packaged file when true and
+    drops it when false. See the header for why one global value cannot serve
+    both native-Wayland and XWayland Qt applications.
     """
     lines = [ENVIRONMENT_HEADER.rstrip("\n")]
+    lines.append(
+        "# qtImModule is ON: QT_IM_MODULE=fcitx is set, for XWayland Qt apps."
+        if set_qt_im_module
+        else "# qtImModule is OFF: QT_IM_MODULE is unset, for native Wayland Qt apps."
+    )
+    seen = set()
     for line in packaged_environment(packaged):
         name = _ASSIGNMENT.fullmatch(line).group(1)
-        if name in DROPPED_ENVIRONMENT:
+        if name in DROPPED_ENVIRONMENT and not set_qt_im_module:
             continue
+        seen.add(name)
         lines.append(line)
+    # A packaged file that has itself already dropped QT_IM_MODULE must not
+    # leave the setting unable to turn it back on: add it when it is wanted and
+    # the packaged file did not carry it.
+    if set_qt_im_module and "QT_IM_MODULE" not in seen:
+        lines.append("QT_IM_MODULE=fcitx")
     return {ENVIRONMENT_PATH: "\n".join(lines) + "\n"}
