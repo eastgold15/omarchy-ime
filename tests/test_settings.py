@@ -22,7 +22,7 @@ class ResolveTests(unittest.TestCase):
         self.assertEqual(result["pageSize"], 5)
 
     def test_unknown_keys_are_dropped(self):
-        result = settings.resolve({"id": "ryuhzk.ime", "nonsense": 1})
+        result = settings.resolve({"id": "omarchy.ime", "nonsense": 1})
         self.assertNotIn("id", result)
         self.assertNotIn("nonsense", result)
 
@@ -92,7 +92,7 @@ class LoadTests(unittest.TestCase):
 
     def test_settings_come_from_the_widget_entry(self):
         with TemporaryDirectory() as directory:
-            path = self._shell_json(directory, {"id": "ryuhzk.ime", "schemas": ["bopomofo"]})
+            path = self._shell_json(directory, {"id": "omarchy.ime", "schemas": ["bopomofo"]})
             self.assertEqual(settings.load(path)["schemas"], ["bopomofo"])
 
     def test_missing_widget_yields_defaults(self):

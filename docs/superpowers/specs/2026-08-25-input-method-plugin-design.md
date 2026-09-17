@@ -4,7 +4,7 @@ Date: 2026-08-25
 Status: built, and deployed on this machine. Reconciled against the code
 2026-08-25.
 Repo: `~/Work/omarchy-ime`
-Plugin id: `ryuhzk.ime`
+Plugin id: `omarchy.ime`
 
 This is the design record, not the manual — the README is the manual. Several
 decisions here were superseded during implementation. Each one says what was
@@ -119,7 +119,7 @@ configuration from the settings below it.
 
 Settings use Omarchy's own plugin schema in `manifest.json`, and live inline on
 the widget's own entry in `bar.layout` in `~/.config/omarchy/shell.json`, matched
-by the entry whose `id` is `ryuhzk.ime`. Omarchy hot-reloads that file on save.
+by the entry whose `id` is `omarchy.ime`. Omarchy hot-reloads that file on save.
 No separate config file.
 
 Every key is flat and camelCase — the same names in `manifest.json` and in
@@ -400,7 +400,7 @@ files an uninstall would leave behind.
 `ime-manager hook install` attaches that to Omarchy. `omarchy-theme-set` ends by
 running `omarchy-hook theme-set <name>`, which runs every file in
 `~/.config/omarchy/hooks/theme-set.d/`, so the hook is one file there, named
-`ryuhzk.ime` after the plugin rather than after the hook — the directory is
+`omarchy.ime` after the plugin rather than after the hook — the directory is
 shared with every other plugin on the machine. It is a three-line shim that runs
 `ime-manager theme apply` and cannot fail: `omarchy-hook` prints "Hook failed"
 for any non-zero exit, and the ordinary reasons this has nothing to do — the
@@ -462,7 +462,7 @@ input works, toggle the hotkey, confirm the annotation appears and disappears.
 
 ## Decisions taken
 
-1. **Name.** `omarchy-ime` / `ryuhzk.ime`.
+1. **Name.** `omarchy-ime` / `omarchy.ime`.
 2. **Package installation is the plugin's job.** It calls `omarchy pkg add` for
    the official packages and `omarchy pkg aur add` for `rime-ice-git` when any
    are missing. A solution that configures an input method but leaves the user

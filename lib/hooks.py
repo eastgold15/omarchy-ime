@@ -44,7 +44,7 @@ TARGET = "hooks"
 # The file name inside theme-set.d. Named after the plugin, not after the hook:
 # the directory is shared with every other plugin on the machine, and a file
 # called `theme-set` in there already belongs to one of them.
-HOOK_NAME = "ryuhzk.ime"
+HOOK_NAME = "omarchy.ime"
 
 MODE = 0o755
 
@@ -66,7 +66,7 @@ def script(manager_path) -> str:
     that is also right when the hook is run by hand.
     """
     return f"""#!/usr/bin/env bash
-# Installed by the ryuhzk.ime Omarchy plugin (`ime-manager hook install`).
+# Installed by the omarchy.ime Omarchy plugin (`ime-manager hook install`).
 # Removed by `ime-manager hook remove` and by `ime-manager uninstall`.
 #
 # Runs when the Omarchy theme changes, with the new theme's name as $1, and

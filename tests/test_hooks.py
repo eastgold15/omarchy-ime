@@ -25,7 +25,7 @@ class HookPathTests(unittest.TestCase):
 
     def test_the_hook_is_named_after_the_plugin_not_after_the_hook(self):
         """The drop-in directory is shared, and `theme-set` is already taken."""
-        self.assertEqual(hooks.HOOK_NAME, "ryuhzk.ime")
+        self.assertEqual(hooks.HOOK_NAME, "omarchy.ime")
         self.assertNotEqual(hooks.HOOK_NAME, "theme-set")
 
     def test_the_hook_name_is_not_skipped_as_a_sample(self):
@@ -34,7 +34,7 @@ class HookPathTests(unittest.TestCase):
 
 
 class HookScriptTests(unittest.TestCase):
-    MANAGER = "/home/someone/.config/omarchy/plugins/ryuhzk.ime/ime-manager"
+    MANAGER = "/home/someone/.config/omarchy/plugins/omarchy.ime/ime-manager"
 
     def script(self, manager=MANAGER):
         return hooks.script(manager)
@@ -52,8 +52,8 @@ class HookScriptTests(unittest.TestCase):
         self.assertIn("exit 0", self.script())
 
     def test_the_path_is_shell_quoted(self):
-        text = hooks.script("/home/some one/plugins/ryuhzk.ime/ime-manager")
-        self.assertIn("'/home/some one/plugins/ryuhzk.ime/ime-manager'", text)
+        text = hooks.script("/home/some one/plugins/omarchy.ime/ime-manager")
+        self.assertIn("'/home/some one/plugins/omarchy.ime/ime-manager'", text)
 
     def test_it_is_a_bash_script(self):
         self.assertTrue(self.script().startswith("#!"))
