@@ -20,7 +20,7 @@ README 只讲功能、安装和卸载；这里的每一节讲一个主题的完�
 `--enable` 会把组件放在插件的默认区域。把它移到属于它的地方：
 
 ```bash
-omarchy bar move omarchy.ime --after omarchy.clock
+omarchy bar move eastgold15.omarchy.ime --after omarchy.clock
 ```
 
 **原版键盘布局指示器不会自行消失。** 这个组件旨在取代它，但没有任何东西会替你移除旧的：如果你之前使用 `omarchy.keyboard-layout`，请手动从 `~/.config/omarchy/shell.json` 的 `bar.layout` 中删除其条目，否则状态栏上会同时出现两者。没有 `omarchy bar` 子命令可以移除组件。
@@ -30,7 +30,7 @@ omarchy bar move omarchy.ime --after omarchy.clock
 只在组件确实位于状态栏上之后才更改设置。设置内联在 `shell.json` 中组件自己的条目上，因此如果没有条目，就没有地方写入它们，而 `ime-manager settings set` 会拒绝而不是凭空创建一个：
 
 ```
-ime-manager: omarchy.ime is not on the bar in /home/you/.config/omarchy/shell.json; add it with `omarchy bar` first
+ime-manager: eastgold15.omarchy.ime is not on the bar in /home/you/.config/omarchy/shell.json; add it with `omarchy bar` first
 ```
 
 这是当 `shell.json` 存在且未提及此插件时的消息。如果文件根本不存在，读取会在查找条目之前失败，你会得到：
@@ -48,7 +48,7 @@ ime-manager: cannot read /home/you/.config/omarchy/shell.json: [Errno 2] No such
 所以如果你今天使用的不只是全拼，请先选择它们：
 
 ```bash
-IME=~/.config/omarchy/plugins/omarchy.ime/ime-manager
+IME=~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager
 $IME schema available            # 此 Rime 安装提供的所有 schema
 $IME settings set schemas=rime_ice,double_pinyin_flypy
 ```
@@ -58,7 +58,7 @@ $IME settings set schemas=rime_ice,double_pinyin_flypy
 ## 部署
 
 ```bash
-~/.config/omarchy/plugins/omarchy.ime/ime-manager deploy
+~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager deploy
 ```
 
 部署会解析你的设置，如果候选词注释开启（且至少有一个释义方向）则下载注释词典，获取已启用功能所需的固定来源，将 Rime 配置写入 `~/.local/share/fcitx5/rime/`，将 Fcitx5 配置安装到 `~/.config/fcitx5/`，其主题文件安装到 `~/.local/share/fcitx5/themes/`，环境覆盖安装到 `~/.config/environment.d/`，并按目标分组打印它安装的每个路径。
@@ -122,8 +122,8 @@ QT_IM_MODULE=fcitx
 候选词窗口从 Omarchy 调色板取主题，而该主题在部署时生成——因此切换 Omarchy 主题会让候选词窗口保持旧主题绘制，直到下次部署。安装一次 theme-set 钩子，它就会自行重绘：
 
 ```bash
-~/.config/omarchy/plugins/omarchy.ime/ime-manager hook install
-~/.config/omarchy/plugins/omarchy.ime/ime-manager hook status
+~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager hook install
+~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager hook status
 ```
 
 钩子是 `~/.config/omarchy/hooks/theme-set.d/` 中的三行 shim，以插件命名，因此不会与另一个插件的冲突。它运行 `ime-manager theme apply`，只重写内容已更改的文件并重新加载 Fcitx5 的 `classicui` 插件——不下载词典，不重建 Rime。它不会失败：`omarchy-hook` 对任何非零退出打印 "Hook failed"，而这件事无事可做的普通原因不值得在每次主题切换时都说。手动运行 `ime-manager theme apply` 查看它本来会说什么。
@@ -155,7 +155,7 @@ input: latin
 
 ## 设置
 
-设置内联在 `~/.config/omarchy/shell.json` 中组件自己的条目上，通过 `id` 为 `omarchy.ime` 的条目匹配。没有单独的配置文件，Omarchy 在保存时热重载该文件。每个键都是可选的：缺失、损坏或未提及此插件的 `shell.json` 会得到默认值而不是错误，类型错误的值会回退到其默认值，因此拼写错误不能阻止输入法部署。
+设置内联在 `~/.config/omarchy/shell.json` 中组件自己的条目上，通过 `id` 为 `eastgold15.omarchy.ime` 的条目匹配。没有单独的配置文件，Omarchy 在保存时热重载该文件。每个键都是可选的：缺失、损坏或未提及此插件的 `shell.json` 会得到默认值而不是错误，类型错误的值会回退到其默认值，因此拼写错误不能阻止输入法部署。
 
 | 键 | 默认值 | 作用 |
 | ---------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

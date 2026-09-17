@@ -13,7 +13,7 @@ import re
 import stat
 from pathlib import Path
 
-PLUGIN_ID = "omarchy.ime"
+PLUGIN_ID = "eastgold15.omarchy.ime"
 
 # Every Rime schema the plugin can deploy, grouped into the families a person
 # actually chooses between. The family is what makes a list of twenty

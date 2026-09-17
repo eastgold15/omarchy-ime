@@ -1,6 +1,6 @@
 # Security
 
-This document is for someone deciding whether to trust `omarchy.ime` on a machine
+This document is for someone deciding whether to trust `eastgold15.omarchy.ime` on a machine
 they are responsible for. It says what the plugin touches, with what authority,
 what it fetches from the network and how that is bounded, and what it
 deliberately does not do. Every claim below names the mechanism that makes it
@@ -17,7 +17,7 @@ not of an isolated one.
 | ------------------------------------------------ | -------------------------------------------------- | --------------------------------------------------- |
 | `Panel.qml`                                      | The bar widget                                     | While the bar is up                                 |
 | `ime-manager`                                    | A Python 3 command line, stdlib only               | When a person or the panel asks it to               |
-| `~/.config/omarchy/hooks/theme-set.d/omarchy.ime` | A three-line shell shim, installed only on request | On every Omarchy theme change                       |
+| `~/.config/omarchy/hooks/theme-set.d/eastgold15.omarchy.ime` | A three-line shell shim, installed only on request | On every Omarchy theme change                       |
 | `payload/rime/lua/annotate.lua`                  | A librime-lua filter                               | Inside `fcitx5`, on every keystroke while composing |
 
 `Panel.qml` performs no filesystem writes at all. Everything the plugin does to
@@ -38,7 +38,7 @@ it:
 | `fcitx5`      | `$XDG_CONFIG_HOME/fcitx5`                               |
 | `themes`      | `$XDG_DATA_HOME/fcitx5/themes/omarchy-ime`              |
 | `environment` | `$XDG_CONFIG_HOME/environment.d/10-omarchy-fcitx.conf`  |
-| `hooks`       | `$XDG_CONFIG_HOME/omarchy/hooks/theme-set.d/omarchy.ime` |
+| `hooks`       | `$XDG_CONFIG_HOME/omarchy/hooks/theme-set.d/eastgold15.omarchy.ime` |
 
 It also writes `$XDG_CONFIG_HOME/omarchy/shell.json` — its own entry on the bar,
 and only the keys it was asked to change — and caches downloads under

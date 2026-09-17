@@ -6,29 +6,29 @@
       "fcitx5"
     ],
     "files": {
-      "fcitx5/conf/classicui.conf": "926f1135ef1acf1d65c806425980e88c83e6ddb6448961f144b11b77174ffdd4",
-      "rime/bopomofo.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/bopomofo_express.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/bopomofo_tw.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/cangjie5.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/cangjie5_express.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/default.custom.yaml": "a95fc3ca7fe4e3abab1f8d498e644bd526b755c2389af91aad4339f8166705d6",
-      "rime/double_pinyin.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/double_pinyin_abc.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/double_pinyin_flypy.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/double_pinyin_jiajia.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/double_pinyin_mspy.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/double_pinyin_sogou.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/double_pinyin_ziguang.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/luna_pinyin.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/luna_pinyin_fluency.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/luna_pinyin_simp.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/luna_pinyin_tw.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/luna_quanpin.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/radical_pinyin.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/rime_ice.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48",
-      "rime/terra_pinyin.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/terra_pinyin_12345.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e"
+      "fcitx5/conf/classicui.conf": "5533846e95bdd980539e57c5f307f96f43f943b3256eb56aac285a5c83275e56",
+      "rime/bopomofo.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/bopomofo_express.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/bopomofo_tw.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/cangjie5.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/cangjie5_express.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/default.custom.yaml": "ad5590fece3c37170f63be0c91a9a700596c8a4fde2cc589aa951f7479b2dc3f",
+      "rime/double_pinyin.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/double_pinyin_abc.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/double_pinyin_flypy.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/double_pinyin_jiajia.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/double_pinyin_mspy.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/double_pinyin_sogou.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/double_pinyin_ziguang.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/luna_pinyin.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/luna_pinyin_fluency.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/luna_pinyin_simp.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/luna_pinyin_tw.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/luna_quanpin.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/radical_pinyin.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/rime_ice.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da",
+      "rime/terra_pinyin.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/terra_pinyin_12345.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6"
     },
     "needed_sources": [
       "rime-japanese",
@@ -45,9 +45,9 @@
       "fcitx5"
     ],
     "files": {
-      "fcitx5/conf/classicui.conf": "926f1135ef1acf1d65c806425980e88c83e6ddb6448961f144b11b77174ffdd4",
-      "rime/bopomofo.custom.yaml": "4607133869e67c55cfd323d25c95e9480eaa624d42e76a925daad4584fbe389e",
-      "rime/default.custom.yaml": "95849ddac89659fcdd26d85230ad8c508b9b021d66afd4b3eff028cfc819612a"
+      "fcitx5/conf/classicui.conf": "5533846e95bdd980539e57c5f307f96f43f943b3256eb56aac285a5c83275e56",
+      "rime/bopomofo.custom.yaml": "372d210ef59b9fac179bf7967dc1d921aa5610c4fbef04e47eeef94d71e516e6",
+      "rime/default.custom.yaml": "566e242761ab0eab90f4108d48acf28f082bfebc7e11a55adb10203271cbb138"
     },
     "needed_sources": [],
     "notices": [
@@ -61,9 +61,9 @@
       "fcitx5"
     ],
     "files": {
-      "fcitx5/conf/classicui.conf": "926f1135ef1acf1d65c806425980e88c83e6ddb6448961f144b11b77174ffdd4",
-      "rime/default.custom.yaml": "ec0a8ab345f2fbd7b190671186634c75a8cc9aee41c7ddd7dbfd8a8d649a6ed2",
-      "rime/rime_ice.custom.yaml": "37fc886d1241be67100f84965ec46a03dbea3347cf7e41cf9c55b10423abc378"
+      "fcitx5/conf/classicui.conf": "5533846e95bdd980539e57c5f307f96f43f943b3256eb56aac285a5c83275e56",
+      "rime/default.custom.yaml": "f635c4c81ffd008149a08140127fc9f99f6cfeff8d641375680d58f3dd9e610f",
+      "rime/rime_ice.custom.yaml": "870e5ac87aa5f196a68dccf8fc2dce22d7533c707c3e64ddfe40acc4d1d61530"
     },
     "needed_sources": [],
     "notices": [],
@@ -76,9 +76,9 @@
       "fcitx5"
     ],
     "files": {
-      "fcitx5/conf/classicui.conf": "926f1135ef1acf1d65c806425980e88c83e6ddb6448961f144b11b77174ffdd4",
-      "rime/default.custom.yaml": "ab6296764a2da203827a756d57dc87eef962369f28e01d6669370520bd2c6be3",
-      "rime/rime_ice.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48"
+      "fcitx5/conf/classicui.conf": "5533846e95bdd980539e57c5f307f96f43f943b3256eb56aac285a5c83275e56",
+      "rime/default.custom.yaml": "8f0e125c0b9bbb4267577145e840d7796775e0a3190389cd593b82d2f9b5e42e",
+      "rime/rime_ice.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da"
     },
     "needed_sources": [
       "rime-japanese",
@@ -93,9 +93,9 @@
       "fcitx5"
     ],
     "files": {
-      "fcitx5/conf/classicui.conf": "926f1135ef1acf1d65c806425980e88c83e6ddb6448961f144b11b77174ffdd4",
-      "rime/default.custom.yaml": "ef6ed8b86632b1fae7aa4517901a10e38ac544531db8f20678ebf007a34f0162",
-      "rime/rime_ice.custom.yaml": "8f3e618a9c74a76113591fbc1154491e1065876f9a60700082b38f148ba95d76"
+      "fcitx5/conf/classicui.conf": "5533846e95bdd980539e57c5f307f96f43f943b3256eb56aac285a5c83275e56",
+      "rime/default.custom.yaml": "534dd2164dca8c554792644aed50ccac720c9a24d14adb195dbe3be09b66b30f",
+      "rime/rime_ice.custom.yaml": "5e08efcc5258a100b851c24f9f71689fed97d9090df6c62fcfe7cf0bf6f1bc1a"
     },
     "needed_sources": [],
     "notices": [],
@@ -107,9 +107,9 @@
       "fcitx5"
     ],
     "files": {
-      "fcitx5/conf/classicui.conf": "926f1135ef1acf1d65c806425980e88c83e6ddb6448961f144b11b77174ffdd4",
-      "rime/default.custom.yaml": "ec0a8ab345f2fbd7b190671186634c75a8cc9aee41c7ddd7dbfd8a8d649a6ed2",
-      "rime/rime_ice.custom.yaml": "180c7c099b745eadf72995df1b44a3b9893addc0f1ff565d5f9edbb5a7c36a48"
+      "fcitx5/conf/classicui.conf": "5533846e95bdd980539e57c5f307f96f43f943b3256eb56aac285a5c83275e56",
+      "rime/default.custom.yaml": "f635c4c81ffd008149a08140127fc9f99f6cfeff8d641375680d58f3dd9e610f",
+      "rime/rime_ice.custom.yaml": "d0032ec23ebf05a5de3959bf828de2e5201370987c314c4bb8302e3eaa8028da"
     },
     "needed_sources": [],
     "notices": [],

@@ -21,8 +21,8 @@ import qs.Ui
 Panel {
   id: root
 
-  moduleName: "omarchy.ime"
-  ipcTarget: "omarchy.ime"
+  moduleName: "eastgold15.omarchy.ime"
+  ipcTarget: "eastgold15.omarchy.ime"
 
   // Live input state. Two readings, from two places, with different rules.
   //
