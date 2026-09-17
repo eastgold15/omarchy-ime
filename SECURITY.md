@@ -314,7 +314,7 @@ Stated because they are real, not because they are comfortable.
 ## Reporting a vulnerability
 
 Open a security advisory on the repository:
-<https://github.com/ryuhzk/omarchy-ime/security/advisories/new>. That keeps the
+<https://github.com/eastgold15/omarchy-ime/security/advisories/new>. That keeps the
 report private until there is something to say publicly.
 
 If advisories are unavailable to you, open an issue that says only that you have

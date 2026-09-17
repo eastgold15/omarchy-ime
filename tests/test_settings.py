@@ -267,7 +267,7 @@ class CatalogueTests(unittest.TestCase):
 
     def test_the_families_are_ordered_the_way_the_picker_shows_them(self):
         families = [family for family, _ids in settings.SCHEMA_FAMILIES]
-        self.assertEqual(families[:4], ["Full pinyin", "Double pinyin", "Zhuyin", "Shape"])
+        self.assertEqual(families[:4], ["全拼", "双拼", "注音", "形码"])
 
     def test_the_default_selection_is_rime_ice_alone(self):
         self.assertEqual(settings.DEFAULT_SCHEMAS, ["rime_ice"])
@@ -275,7 +275,7 @@ class CatalogueTests(unittest.TestCase):
     def test_the_japanese_schemas_are_a_family_like_any_other(self):
         self.assertIn("japanese_tw_eng", settings.SCHEMA_IDS)
         self.assertIn("sno_japanese", settings.SCHEMA_IDS)
-        self.assertEqual(settings.SCHEMA_FAMILY["sno_japanese"], "Japanese")
+        self.assertEqual(settings.SCHEMA_FAMILY["sno_japanese"], "日语")
 
     def test_the_japanese_schemas_do_not_count_as_chinese(self):
         for schema_id in ("japanese_tw_eng", "sno_japanese"):
@@ -290,7 +290,7 @@ class CatalogueTests(unittest.TestCase):
     def test_the_catalogue_falls_back_to_the_id_when_no_name_is_readable(self):
         entries = {entry["value"]: entry for entry in settings.catalogue()}
         self.assertEqual(entries["luna_pinyin"]["label"], "luna_pinyin")
-        self.assertEqual(entries["luna_pinyin"]["description"], "Full pinyin")
+        self.assertEqual(entries["luna_pinyin"]["description"], "全拼")
 
     def test_the_catalogue_carries_the_name_its_lookup_returns(self):
         entries = {e["value"]: e for e in settings.catalogue(lambda i: i.upper())}

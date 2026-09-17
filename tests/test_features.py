@@ -159,7 +159,7 @@ class FeatureRecordTests(unittest.TestCase):
 
     def test_the_japanese_feature_is_the_catalogues_japanese_family(self):
         family = tuple(schema for schema in settings.SCHEMA_IDS
-                       if settings.SCHEMA_FAMILY[schema] == "Japanese")
+                       if settings.SCHEMA_FAMILY[schema] == "日语")
         self.assertEqual(features.JAPANESE.schemas, family)
         self.assertEqual(set(features.JAPANESE.schemas), settings.NON_CHINESE_SCHEMAS)
 

@@ -30,19 +30,19 @@ PLUGIN_ID = "ryuhzk.ime"
 # Every id was checked against /usr/share/rime-data; the Japanese two are
 # shipped in this plugin's own payload.
 SCHEMA_FAMILIES = (
-    ("Full pinyin", (
+    ("全拼", (
         "rime_ice", "luna_pinyin", "luna_quanpin", "luna_pinyin_simp",
         "luna_pinyin_tw", "luna_pinyin_fluency",
     )),
-    ("Double pinyin", (
+    ("双拼", (
         "double_pinyin", "double_pinyin_flypy", "double_pinyin_mspy",
         "double_pinyin_sogou", "double_pinyin_jiajia", "double_pinyin_ziguang",
         "double_pinyin_abc",
     )),
-    ("Zhuyin", ("bopomofo", "bopomofo_tw", "bopomofo_express")),
-    ("Shape", ("cangjie5", "cangjie5_express", "radical_pinyin")),
-    ("Other", ("terra_pinyin", "terra_pinyin_12345")),
-    ("Japanese", ("japanese_tw_eng", "sno_japanese")),
+    ("注音", ("bopomofo", "bopomofo_tw", "bopomofo_express")),
+    ("形码", ("cangjie5", "cangjie5_express", "radical_pinyin")),
+    ("其他", ("terra_pinyin", "terra_pinyin_12345")),
+    ("日语", ("japanese_tw_eng", "sno_japanese")),
 )
 
 SCHEMA_IDS = tuple(

@@ -113,8 +113,8 @@ class AnnotationSwitchTests(unittest.TestCase):
 
     def test_the_description_says_what_turning_it_off_removes(self):
         description = self.entry["description"]
-        for word in ("filter", "dictionary", "hotkey", "off by default"):
-            self.assertIn(word, description.lower(), word)
+        for word in ("过滤器", "词典", "热键", "默认关闭"):
+            self.assertIn(word, description, word)
 
     def test_it_comes_before_the_settings_it_governs(self):
         keys = [item["key"] for item in self.widget["schema"]]

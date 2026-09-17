@@ -165,15 +165,15 @@ Panel {
       key: "annotation",
       group: "settings",
       fallback: false,
-      label: "Candidate annotation",
-      description: "Off by default. On downloads CC-CEDICT for the glosses."
+      label: "候选词注释",
+      description: "默认关闭。开启会下载 CC-CEDICT 词典用于释义。"
     },
     {
       key: "annotateChinese",
       group: "settings",
       fallback: true,
       requires: "annotation",
-      label: "English gloss on Chinese",
+      label: "中文候选词标英文",
       description: ""
     },
     {
@@ -181,37 +181,37 @@ Panel {
       group: "settings",
       fallback: true,
       requires: "annotation",
-      label: "Chinese gloss on English",
+      label: "英文候选词标中文",
       description: ""
     },
     {
       key: "traditionalize",
       group: "settings",
       fallback: true,
-      label: "Traditional output",
-      description: "Converted with the s2twp profile."
+      label: "繁体输出",
+      description: "使用 s2twp 方案转换。"
     },
     {
       key: "annotateShowPinyin",
       group: "annotations",
       fallback: false,
       requires: "annotation",
-      label: "Pinyin in the gloss",
-      description: "Prefixed, before the meaning."
+      label: "释义中带拼音",
+      description: "加在释义之前。"
     },
     {
       key: "verticalCandidates",
       group: "candidates",
       fallback: true,
-      label: "Vertical candidate list",
+      label: "候选词竖排",
       description: ""
     },
     {
       key: "qtImModule",
       group: "candidates",
       fallback: true,
-      label: "Input method for XWayland Qt apps",
-      description: "QT_IM_MODULE=fcitx, so apps like WeChat can type Chinese. Next login."
+      label: "XWayland Qt 应用的输入法",
+      description: "设置 QT_IM_MODULE=fcitx，让微信等应用能输入中文。下次登录生效。"
     }
   ]
 
@@ -401,21 +401,21 @@ Panel {
   // two characters, so it spends it.
   function schemaTitle() {
     var name = schemaName(currentSchema).trim()
-    return name === "" ? "Composing" : name
+    return name === "" ? "组字中" : name
   }
 
   function stateLabel() {
-    if (inputState === "latin") return "Latin"
+    if (inputState === "latin") return "英文"
     if (inputState === "active") return schemaTitle()
-    return "Closed"
+    return "已关闭"
   }
 
   // The hero's meta line, which elides rather than wraps, so it has to say its
   // whole piece inside one line of a panel this wide.
   function stateDescription() {
-    if (inputState === "latin") return "Keystrokes pass through as latin"
-    if (inputState === "active") return schemaTitle() + " is composing"
-    return "Fcitx5 is not running"
+    if (inputState === "latin") return "按键以拉丁字母直接通过"
+    if (inputState === "active") return schemaTitle() + " 正在组字"
+    return "Fcitx5 未运行"
   }
 
   function stateColor() {
@@ -425,9 +425,9 @@ Panel {
   }
 
   function barTooltip() {
-    if (inputState === "latin") return "Input method · latin"
-    if (inputState === "active") return "Input method · " + schemaTitle()
-    return "Input method · closed"
+    if (inputState === "latin") return "输入法 · 英文"
+    if (inputState === "active") return "输入法 · " + schemaTitle()
+    return "输入法 · 已关闭"
   }
 
   // The shell's own yes/no pair, so this panel's marks read as the rest of
@@ -459,9 +459,9 @@ Panel {
   // other two are told apart here rather than by the mark, which keeps the
   // panel's two glyphs and says the same thing about both - this is not on.
   function hyprDetail(state, absent) {
-    if (state === "on") return "In your Hyprland config · the plugin never writes it"
+    if (state === "on") return "在你的 Hyprland 配置中 · 插件从不写入它"
     if (state === "off") return absent
-    return "Cannot tell · Hyprland did not answer"
+    return "无法确定 · Hyprland 没有回答"
   }
 
   // What the status report says, row by row. The first three are this plugin's
@@ -474,7 +474,7 @@ Panel {
     return [
       {
         id: "packages",
-        label: "Packages",
+        label: "软件包",
         ok: missingCount === 0,
         // A settled row says nothing the mark has not already said: naming the
         // three packages back at someone who can see they are installed is not
@@ -482,49 +482,49 @@ Panel {
         // that is the part they cannot see.
         detail: missingCount === 0
           ? ""
-          : missingCount + " missing · " + packagesMissing.join(", ")
+          : "缺失 " + missingCount + " 个 · " + packagesMissing.join(", ")
       },
       {
         id: "dictionary",
-        label: "Dictionary",
+        label: "词典",
         // Not wanted is not missing. With annotation off - the default -
         // nothing reads the dictionary, so its absence is nothing to fix.
         ok: dictionaryReady || !dictionaryNeeded,
         detail: !dictionaryNeeded
-          ? "Not needed while candidate annotation is off"
+          ? "候选词注释关闭时不需要"
           : dictionaryReady
             ? ""
-            : "The next deploy fetches it"
+            : "下次部署时下载"
       },
       {
         id: "deploy",
-        label: "Configuration",
+        label: "配置",
         ok: deployed,
         // The one settled row that keeps a sentence, because it is a warning
         // and not a status: whatever is on disk is rewritten from the settings
         // in this panel, so a hand edit to it does not survive a deploy.
         detail: deployed
-          ? "A deploy rewrites it from the settings above"
-          : "Never deployed · nothing is on disk yet"
+          ? "部署会用上面的设置重写它"
+          : "从未部署 · 磁盘上还没有任何内容"
       },
       {
         id: "hyprToggle",
-        label: "Input method toggle",
+        label: "输入法切换键",
         ok: hyprToggle === "on",
         optional: true,
         detail: hyprDetail(
           hyprToggle,
-          "No key toggles Fcitx5 · the README has the snippet"
+          "没有切换 Fcitx5 的键 · README 里有示例代码"
         )
       },
       {
         id: "hyprBlur",
-        label: "Candidate window blur",
+        label: "候选词窗口模糊",
         ok: hyprBlur === "on",
         optional: true,
         detail: hyprDetail(
           hyprBlur,
-          "Candidates are not blurred · the README has the snippet"
+          "候选词窗口没有模糊 · README 里有示例代码"
         )
       }
     ]
@@ -799,7 +799,7 @@ Panel {
         root.settingsLoaded = true
       } catch (error) {
         root.settingsOk = false
-        root.settingsResult = "Could not read the settings"
+        root.settingsResult = "无法读取设置"
       }
     }
   }
@@ -819,7 +819,7 @@ Panel {
     onExited: function(exitCode) {
       if (exitCode !== 0) {
         root.settingsOk = false
-        root.settingsResult = root.settingsSetError || "Could not change the setting"
+        root.settingsResult = root.settingsSetError || "无法更改设置"
         root.refreshSettings()
         return
       }
@@ -831,7 +831,7 @@ Panel {
       }
       root.settingsDirty = true
       root.settingsOk = true
-      root.settingsResult = root.pendingSettingLabel + " saved · deploy to apply it"
+      root.settingsResult = "已保存「" + root.pendingSettingLabel + "」· 部署后生效"
     }
   }
 
@@ -882,8 +882,8 @@ Panel {
     onExited: function(exitCode) {
       root.schemaOk = exitCode === 0
       root.schemaResult = exitCode === 0
-        ? root.pendingSchema + " is now the active schema"
-        : (root.schemaSetError || "Could not switch schema")
+        ? "已切换到 " + root.pendingSchema
+        : (root.schemaSetError || "无法切换输入方案")
       root.refreshSchemas()
       root.refreshCurrentSchema()
     }
@@ -910,8 +910,8 @@ Panel {
       // "Package installation failed" with no package, no reason and no next
       // step.
       root.installResult = exitCode === 0
-        ? (root.installOutput || "Packages installed")
-        : (root.installError || root.installOutput || "Package installation failed")
+        ? (root.installOutput || "软件包已安装")
+        : (root.installError || root.installOutput || "软件包安装失败")
       root.refreshStatus()
     }
   }
@@ -961,7 +961,7 @@ Panel {
 
       if (exitCode !== 0) {
         root.deployOk = false
-        root.deployResult = root.deployError || "Deploy failed"
+        root.deployResult = root.deployError || "部署失败"
         return
       }
       root.deployOk = true
@@ -974,13 +974,12 @@ Panel {
         return line.indexOf("environment/") === 0
       })
       root.deployResult = (paths.length === 0
-        ? "Deployed · nothing needed writing"
-        : "Deployed · " + paths.length + " files installed")
-        + (login ? " · the QT_IM_MODULE override applies at your next login" : "")
+        ? "已部署 · 没有需要写入的内容"
+        : "已部署 · 安装了 " + paths.length + " 个文件")
+        + (login ? " · QT_IM_MODULE 覆盖在下次登录时生效" : "")
         + (warnings.length === 0
             ? ""
-            : " · " + warnings.length
-              + (warnings.length === 1 ? " warning" : " warnings"))
+            : " · " + warnings.length + " 条警告")
       // Only the changes this deploy actually read are reported as applied. A
       // write that landed after it started is still pending, and the footer
       // stays up saying so.
@@ -1103,7 +1102,7 @@ Panel {
 
           PanelHero {
             width: parent.width
-            title: "Input Method"
+            title: "输入法"
             meta: root.stateDescription()
             detail: root.stateLabel()
             foreground: root.foreground
@@ -1169,7 +1168,7 @@ Panel {
 
               Text {
                 width: parent.width
-                text: "󰆓  Nothing is deployed yet"
+                text: "󰆓  还没有部署任何内容"
                 color: Color.accent
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.bodySmall
@@ -1179,8 +1178,8 @@ Panel {
               Text {
                 width: parent.width
                 text: root.missingCount > 0
-                  ? "Install the missing packages first, then press Deploy to write the configuration."
-                  : "Press Deploy to write the configuration. Nothing reaches Fcitx5 or Rime until you do."
+                  ? "先安装缺失的软件包，然后按「部署」写入配置。"
+                  : "按「部署」写入配置。在此之前什么都不会到达 Fcitx5 或 Rime。"
                 color: root.dim
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption
@@ -1228,22 +1227,21 @@ Panel {
             // onto the accent through the same tokens it already uses.
             Button {
               id: deployButton
-              text: root.busy ? "Working…" : (root.settingsDirty ? "Deploy to apply" : "Deploy")
+              text: root.busy ? "正在处理…" : (root.settingsDirty ? "部署以应用" : "部署")
               iconText: root.busy ? "󰑓" : "󰆓"
               iconSpinning: deployProcess.running
               bordered: true
               foreground: root.settingsDirty ? Color.accent : root.foreground
               accent: Color.accent
-              tooltipText: "Write the configuration from the settings below (D)"
+              tooltipText: "用下面的设置写入配置（D）"
               onClicked: root.deploy()
             }
 
             Button {
               visible: root.missingCount > 0
               text: installProcess.running
-                ? "Installing…"
-                : "Install " + root.missingCount
-                  + (root.missingCount === 1 ? " package" : " packages")
+                ? "正在安装…"
+                : "安装 " + root.missingCount + " 个软件包"
               iconText: installProcess.running ? "󰑓" : "󰏖"
               iconSpinning: installProcess.running
               bordered: true
@@ -1252,14 +1250,14 @@ Panel {
               // elevation is Omarchy's `pkg add`, not this plugin's, and the
               // only thing the user needs from this sentence is that a window
               // will open and ask them for a password.
-              tooltipText: "Install the missing packages in a terminal window, which will ask for your password (I)"
+              tooltipText: "在终端窗口中安装缺失的软件包，终端会询问你的密码（I）"
               onClicked: root.installPackages()
             }
 
             PanelActionButton {
               iconText: "󰑐"
               size: actionRow.lineHeight
-              tooltipText: "Refresh state, status, settings, and schemas (R)"
+              tooltipText: "刷新状态、设置和输入方案（R）"
               foreground: root.foreground
               enabled: !root.busy
               onClicked: root.refreshEverything()
@@ -1268,7 +1266,7 @@ Panel {
             PanelActionButton {
               iconText: "󰒓"
               size: actionRow.lineHeight
-              tooltipText: "Edit settings in shell.json (E)"
+              tooltipText: "在 shell.json 中编辑设置（E）"
               foreground: root.foreground
               onClicked: root.openSettings()
             }
@@ -1338,7 +1336,7 @@ Panel {
             spacing: Style.spacing.md
 
             PanelSectionHeader {
-              text: "ACTIVE SCHEMA"
+              text: "当前输入方案"
               fontSize: Style.font.bodySmall
               foreground: root.foreground
               fontFamily: root.fontFamily
@@ -1351,7 +1349,7 @@ Panel {
               // Rime session rather than a setting - is an explanation of our
               // internals, and it was being delivered every time the panel
               // opened. The comment above this Column is where it belongs.
-              text: "Click one to switch. Takes effect at once, with nothing to deploy."
+              text: "点击即可切换，立即生效，无需部署。"
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -1362,8 +1360,8 @@ Panel {
               width: parent.width
               visible: root.schemas.length === 0
               text: root.schemasLoaded
-                ? "No schemas · is Fcitx5 running with the Rime addon?"
-                : "Reading schemas…"
+                ? "没有输入方案 · Fcitx5 是否正在运行并加载了 Rime 插件？"
+                : "正在读取输入方案…"
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.bodySmall
@@ -1392,7 +1390,7 @@ Panel {
             spacing: Style.spacing.sm
 
             PanelSectionHeader {
-              text: "SETTINGS"
+              text: "设置"
               fontSize: Style.font.bodySmall
               foreground: root.foreground
               fontFamily: root.fontFamily
@@ -1402,7 +1400,7 @@ Panel {
               width: parent.width
               // Shorter, but the deploy half stays: it is the answer to "I
               // changed it and nothing happened".
-              text: "Saved to shell.json. Takes effect on the next deploy."
+              text: "保存到 shell.json，下次部署时生效。"
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -1411,7 +1409,7 @@ Panel {
 
             Text {
               width: parent.width
-              text: "Reading settings…"
+              text: "正在读取设置…"
               visible: !root.settingsLoaded
               color: root.dim
               font.family: root.fontFamily
@@ -1453,7 +1451,7 @@ Panel {
           Button {
             id: advancedToggle
             width: parent.width
-            text: "Advanced settings"
+            text: "高级设置"
             iconText: "󰅀"
             iconRotation: root.advancedShown ? 0 : -90
             leftAlign: true
@@ -1461,8 +1459,8 @@ Panel {
             foreground: root.foreground
             accent: Color.accent
             tooltipText: root.advancedShown
-              ? "Hide the settings that are chosen once (A)"
-              : "Show schemas, the candidate window, and the status report (A)"
+              ? "隐藏只需选择一次的设置（A）"
+              : "显示输入方案、候选词窗口和状态报告（A）"
             onClicked: root.advancedShown = !root.advancedShown
 
             Behavior on iconRotation {
@@ -1506,7 +1504,7 @@ Panel {
                 spacing: Style.spacing.md
 
                 PanelSectionHeader {
-                  text: "ANNOTATIONS"
+                  text: "注释"
                   foreground: root.foreground
                   fontFamily: root.fontFamily
                 }
@@ -1521,8 +1519,8 @@ Panel {
                 }
 
                 SettingRow {
-                  label: "Annotation hotkey"
-                  description: "Toggles the glosses while composing. It stays free everywhere else."
+                  label: "注释热键"
+                  description: "组字时切换释义。它在其他地方保持空闲。"
                   focused: hotkeyField.activeFocus
                   controlWidth: Style.space(140)
 
@@ -1546,7 +1544,7 @@ Panel {
                         text = root.settingValue("annotateHotkey", "Control+e")
                         return
                       }
-                      root.writeSetting("annotateHotkey", value, "Annotation hotkey")
+                      root.writeSetting("annotateHotkey", value, "注释热键")
                     }
                   }
                 }
@@ -1559,7 +1557,7 @@ Panel {
                 spacing: Style.spacing.md
 
                 PanelSectionHeader {
-                  text: "INPUT SCHEMAS"
+                  text: "输入方案"
                   foreground: root.foreground
                   fontFamily: root.fontFamily
                 }
@@ -1575,15 +1573,15 @@ Panel {
                   id: schemaPicker
 
                   width: parent.width
-                  label: "Deployed schemas"
+                  label: "部署的输入方案"
                   // A schema's readable name is the `name:` in its own schema yaml,
                   // so the list is asked for rather than written here: the manager
                   // reads those files and answers with the id, that name, and the
                   // family the schema belongs to.
                   optionsCommand: [root.managerPath, "schema", "available", "--json"]
-                  noSelectionText: "Nothing selected"
-                  placeholderText: "Search schemas…"
-                  emptyText: "No schemas found"
+                  noSelectionText: "未选择任何方案"
+                  placeholderText: "搜索输入方案…"
+                  emptyText: "没有找到输入方案"
                   foreground: root.foreground
                   accent: Color.accent
                   fontFamily: root.fontFamily
@@ -1602,7 +1600,7 @@ Panel {
                   }
 
                   onChanged: function(selection) {
-                    root.writeSetting("schemas", selection, "Deployed schemas")
+                    root.writeSetting("schemas", selection, "部署的输入方案")
                   }
                 }
 
@@ -1611,7 +1609,7 @@ Panel {
                   // Both halves are things the reader cannot see: that the
                   // selection is floored at one Chinese schema, and that picking a
                   // Japanese one makes the next deploy fetch a dictionary.
-                  text: "One Chinese schema always stays. A Japanese one downloads its dictionary on the next deploy."
+                  text: "至少保留一个中文输入方案。选择日语方案会在下次部署时下载其词典。"
                   color: root.dim
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.caption
@@ -1626,14 +1624,14 @@ Panel {
                 spacing: Style.spacing.md
 
                 PanelSectionHeader {
-                  text: "CANDIDATE WINDOW"
+                  text: "候选词窗口"
                   foreground: root.foreground
                   fontFamily: root.fontFamily
                 }
 
                 SettingRow {
-                  label: "Candidates per page"
-                  description: "How many candidates Rime shows at once."
+                  label: "每页候选词数"
+                  description: "Rime 一次显示多少个候选词。"
                   focused: pageSizeField.field.activeFocus
                   controlWidth: Style.spacing.numberFieldWidth
 
@@ -1649,7 +1647,7 @@ Panel {
                     accent: Color.accent
                     fontFamily: root.fontFamily
                     enabled: !root.settingsLocked
-                    onModified: function(value) { root.writeSetting("pageSize", value, "Candidates per page") }
+                    onModified: function(value) { root.writeSetting("pageSize", value, "每页候选词数") }
                   }
                 }
 
@@ -1682,13 +1680,13 @@ Panel {
                   model: [
                     {
                       key: "backgroundImageDark",
-                      label: "Dark theme background",
-                      description: "Used while a dark Omarchy theme is active."
+                      label: "深色主题背景",
+                      description: "深色 Omarchy 主题激活时使用。"
                     },
                     {
                       key: "backgroundImageLight",
-                      label: "Light theme background",
-                      description: "Used while a light Omarchy theme is active."
+                      label: "浅色主题背景",
+                      description: "浅色 Omarchy 主题激活时使用。"
                     }
                   ]
 
@@ -1711,7 +1709,7 @@ Panel {
                       // role than a value, but that difference is a shade, and a
                       // shade is not enough to carry "there is nothing here" - the
                       // words have to say it.
-                      placeholderText: "None · absolute path"
+                      placeholderText: "无 · 绝对路径"
                       foreground: root.foreground
                       accent: Color.accent
                       font.family: root.fontFamily
@@ -1751,7 +1749,7 @@ Panel {
                 spacing: Style.spacing.md
 
                 PanelSectionHeader {
-                  text: "STATUS"
+                  text: "状态"
                   fontSize: Style.font.bodySmall
                   foreground: root.foreground
                   fontFamily: root.fontFamily
@@ -1759,7 +1757,7 @@ Panel {
 
                 Text {
                   width: parent.width
-                  text: "Reading plugin status…"
+                  text: "正在读取插件状态…"
                   visible: !root.statusLoaded
                   color: root.dim
                   font.family: root.fontFamily
@@ -1861,13 +1859,13 @@ Panel {
           Button {
             id: applyButton
             visible: root.settingsDirty
-            text: root.busy ? "Working…" : "Deploy to apply the changes"
+            text: root.busy ? "正在处理…" : "部署以应用更改"
             iconText: root.busy ? "󰑓" : "󰆓"
             iconSpinning: deployProcess.running
             bordered: true
             foreground: Color.accent
             accent: Color.accent
-            tooltipText: "Rewrite the configuration from these settings (D)"
+            tooltipText: "用这些设置重写配置（D）"
             onClicked: root.deploy()
           }
         }

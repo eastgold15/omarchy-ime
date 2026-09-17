@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
   "id": "ryuhzk.ime",
-  "name": "Input Method",
+  "name": "输入法",
   "version": "0.1.0",
   "author": "ryuhzk",
   "license": "MIT",
-  "description": "Own the whole input method from the bar: Fcitx5, Rime, and candidate annotation.",
+  "description": "从状态栏掌管整个输入法：Fcitx5、Rime 和候选词注释。",
   "kinds": ["bar-widget"],
   "entryPoints": {
     "barWidget": "Panel.qml"
   },
   "barWidget": {
-    "displayName": "Input Method",
-    "description": "Live input state, schema switching, and every Fcitx5 and Rime setting in one place.",
-    "category": "System",
+    "displayName": "输入法",
+    "description": "实时输入状态、schema 切换，以及所有 Fcitx5 和 Rime 设置，都在一处。",
+    "category": "系统",
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {
@@ -35,196 +35,196 @@
       {
         "key": "schemas",
         "type": "multiselect",
-        "label": "Input schemas",
-        "description": "Which Rime schemas are deployed, in the order Rime offers them. Every option is listed under its family; the option's own id is what Rime calls it, and the panel shows each schema's readable name beside it. At least one Chinese schema has to stay selected.",
-        "noSelectionText": "Rime Ice only",
-        "placeholderText": "Search schemas...",
-        "emptyText": "No schemas",
+        "label": "输入方案",
+        "description": "部署哪些 Rime schema，按 Rime 提供的顺序。每个选项列在其所属类别下；选项自己的 id 是 Rime 对它的称呼，面板会在旁边显示每个 schema 的可读名称。至少保留一个中文 schema。",
+        "noSelectionText": "仅 Rime Ice",
+        "placeholderText": "搜索 schema...",
+        "emptyText": "无 schema",
         "defaultValue": ["rime_ice"],
         "options": [
           {
             "value": "rime_ice",
-            "description": "Full pinyin"
+            "description": "全拼"
           },
           {
             "value": "luna_pinyin",
-            "description": "Full pinyin"
+            "description": "全拼"
           },
           {
             "value": "luna_quanpin",
-            "description": "Full pinyin"
+            "description": "全拼"
           },
           {
             "value": "luna_pinyin_simp",
-            "description": "Full pinyin"
+            "description": "全拼"
           },
           {
             "value": "luna_pinyin_tw",
-            "description": "Full pinyin"
+            "description": "全拼"
           },
           {
             "value": "luna_pinyin_fluency",
-            "description": "Full pinyin"
+            "description": "全拼"
           },
           {
             "value": "double_pinyin",
-            "description": "Double pinyin"
+            "description": "双拼"
           },
           {
             "value": "double_pinyin_flypy",
-            "description": "Double pinyin"
+            "description": "双拼"
           },
           {
             "value": "double_pinyin_mspy",
-            "description": "Double pinyin"
+            "description": "双拼"
           },
           {
             "value": "double_pinyin_sogou",
-            "description": "Double pinyin"
+            "description": "双拼"
           },
           {
             "value": "double_pinyin_jiajia",
-            "description": "Double pinyin"
+            "description": "双拼"
           },
           {
             "value": "double_pinyin_ziguang",
-            "description": "Double pinyin"
+            "description": "双拼"
           },
           {
             "value": "double_pinyin_abc",
-            "description": "Double pinyin"
+            "description": "双拼"
           },
           {
             "value": "bopomofo",
-            "description": "Zhuyin"
+            "description": "注音"
           },
           {
             "value": "bopomofo_tw",
-            "description": "Zhuyin"
+            "description": "注音"
           },
           {
             "value": "bopomofo_express",
-            "description": "Zhuyin"
+            "description": "注音"
           },
           {
             "value": "cangjie5",
-            "description": "Shape"
+            "description": "形码"
           },
           {
             "value": "cangjie5_express",
-            "description": "Shape"
+            "description": "形码"
           },
           {
             "value": "radical_pinyin",
-            "description": "Shape"
+            "description": "形码"
           },
           {
             "value": "terra_pinyin",
-            "description": "Other"
+            "description": "其他"
           },
           {
             "value": "terra_pinyin_12345",
-            "description": "Other"
+            "description": "其他"
           },
           {
             "value": "japanese_tw_eng",
-            "description": "Japanese"
+            "description": "日语"
           },
           {
             "value": "sno_japanese",
-            "description": "Japanese"
+            "description": "日语"
           }
         ]
       },
       {
         "key": "annotation",
         "type": "boolean",
-        "label": "Candidate annotation",
+        "label": "候选词注释",
         "defaultValue": false,
-        "description": "Glosses beside the candidates, read from CC-CEDICT: an English meaning on a Chinese candidate, a Chinese meaning on an English one, shown and hidden with a hotkey while composing. Off by default. Turning it off installs no Lua filter, downloads no dictionary, and writes no annotation filter, switch or hotkey binding into any schema; the four gloss settings below keep their values for when it is turned back on."
+        "description": "候选词旁的释义，从 CC-CEDICT 读取：中文候选词上标英文含义，英文候选词上标中文含义，组字时用热键显示和隐藏。默认关闭。关闭时不安装 Lua 过滤器、不下载词典，也不向任何 schema 写入注释过滤器、开关或热键绑定；下面四个释义设置在重新打开时会保留其值。"
       },
       {
         "key": "annotateChinese",
         "type": "boolean",
-        "label": "English gloss on Chinese",
+        "label": "中文候选词标英文",
         "defaultValue": true,
-        "description": "Show what a Chinese candidate means in English."
+        "description": "显示中文候选词的英文含义。"
       },
       {
         "key": "annotateEnglish",
         "type": "boolean",
-        "label": "Chinese gloss on English",
+        "label": "英文候选词标中文",
         "defaultValue": true,
-        "description": "Show what an English candidate means in Chinese."
+        "description": "显示英文候选词的中文含义。"
       },
       {
         "key": "annotateShowPinyin",
         "type": "boolean",
-        "label": "Pinyin in the gloss",
+        "label": "释义中带拼音",
         "defaultValue": false,
-        "description": "Prefix the gloss with the candidate's pinyin. Off by default: the gloss is what the feature is for, and the pinyin is already in what you just typed."
+        "description": "在释义前加上候选词的拼音。默认关闭：释义才是这个功能的意义，而拼音已经在你刚输入的内容里了。"
       },
       {
         "key": "annotateHotkey",
         "type": "string",
-        "label": "Annotation hotkey",
+        "label": "注释热键",
         "defaultValue": "Control+e",
-        "description": "Toggles the glosses while composing. It stays free everywhere else, so terminals keep their own binding for this key."
+        "description": "组字时切换释义。它在其他地方保持空闲，因此终端保留自己对这个键的绑定。"
       },
       {
         "key": "traditionalize",
         "type": "boolean",
-        "label": "Traditional output",
+        "label": "繁体输出",
         "defaultValue": true,
-        "description": "Convert output to traditional Chinese using the s2twp profile."
+        "description": "使用 s2twp 配置将输出转换为繁体中文。"
       },
       {
         "key": "pageSize",
         "type": "integer",
-        "label": "Candidates per page",
+        "label": "每页候选词数",
         "min": 1,
         "max": 10,
         "step": 1,
         "defaultValue": 10,
-        "description": "How many candidates Rime shows at once."
+        "description": "Rime 一次显示多少个候选词。"
       },
       {
         "key": "verticalCandidates",
         "type": "boolean",
-        "label": "Vertical candidate list",
+        "label": "候选词竖排",
         "defaultValue": true,
-        "description": "Stack candidates vertically instead of in a row."
+        "description": "候选词垂直堆叠，而不是排成一行。"
       },
       {
         "key": "qtImModule",
         "type": "boolean",
-        "label": "Input method for XWayland Qt apps",
+        "label": "XWayland Qt 应用的输入法",
         "defaultValue": true,
-        "description": "Sets QT_IM_MODULE=fcitx so XWayland Qt applications such as WeChat can type Chinese. Turn it off only if a native Wayland Qt surface misbehaves. Takes effect at the next login."
+        "description": "设置 QT_IM_MODULE=fcitx，让 XWayland Qt 应用（如微信）能输入中文。只有在原生 Wayland Qt 表面行为异常时才关闭它。下次登录时生效。"
       },
       {
         "key": "backgroundImageLight",
         "type": "string",
-        "label": "Light theme background",
+        "label": "浅色主题背景",
         "defaultValue": "",
-        "description": "Absolute path to an image drawn behind the candidates while a light Omarchy theme is active. Leave empty for the theme's own background colour. Accepts .png, .svg, .svgz, .jpg, .jpeg, .jpe, .webp, .bmp and .gif. The image replaces the generated panel rather than tinting it, so the theme colour shows only if the file cannot be loaded."
+        "description": "浅色 Omarchy 主题活动时绘制在候选词后面的图像的绝对路径。留空则使用主题自己的背景色。接受 .png、.svg、.svgz、.jpg、.jpeg、.jpe、.webp、.bmp 和 .gif。图像会替换生成的面板而非给它着色，因此只有文件无法加载时才会显示主题颜色。"
       },
       {
         "key": "backgroundImageDark",
         "type": "string",
-        "label": "Dark theme background",
+        "label": "深色主题背景",
         "defaultValue": "",
-        "description": "Absolute path to an image drawn behind the candidates while a dark Omarchy theme is active. Leave empty for the theme's own background colour. Two images rather than one because an image chosen against a dark theme is unreadable under a light one, and the candidate window follows whichever theme is switched on."
+        "description": "深色 Omarchy 主题活动时绘制在候选词后面的图像的绝对路径。留空则使用主题自己的背景色。用两张图像而非一张，因为针对深色主题挑选的图像在浅色下不可读，而候选词窗口跟随切换到的主题。"
       },
       {
         "key": "panelWidth",
         "type": "integer",
-        "label": "Panel width",
+        "label": "面板宽度",
         "min": 400,
         "max": 720,
         "step": 10,
         "defaultValue": 420,
-        "description": "Width of the popup panel in layout units. The lower bound is the narrowest panel at which every settings label still fits beside its control without eliding."
+        "description": "弹出面板的宽度，以布局单位计。下限是每个设置标签仍能在其控件旁完整显示而不省略的最窄面板。"
       }
     ]
   }
