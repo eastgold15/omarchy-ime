@@ -216,10 +216,11 @@ def cmd_deploy(_args) -> int:
         for line in rebuild["errors"]:
             print(f"  {line}", file=sys.stderr)
         print(
-            "ime-manager: the configuration is on disk but is NOT in effect;"
-            " input may be broken until this is fixed",
+            "ime-manager: 配置已写入磁盘但尚未生效；"
+            "修复之前输入可能无法使用",
             file=sys.stderr,
         )
+        _print_rebuild_recovery()
         return 1
     # Succeeded without evidence. Nothing is wrong, and saying "rebuilt" would
     # be claiming to have watched something this could not see - which is the
@@ -229,6 +230,34 @@ def cmd_deploy(_args) -> int:
         return 0
     print("rime: rebuilt")
     return 0
+
+
+def _print_rebuild_recovery() -> None:
+    """Tell the user how to get from "not in effect" back to typing.
+
+    The failure itself is already reported above; what a stranded user needs
+    next is the sequence that turns the silent build failure into a visible
+    error message and then into a working schema again.
+    """
+    rime = rime_dir()
+    manager = Path(sys.argv[0]).name
+    steps = [
+        "恢复方法：",
+        f"  1. 手动构建，查看 Rime 自己的报错（yaml 语法错误、词典缺失等）：",
+        f"       rime_deployer --build {rime}",
+        f"  2. 按报错修复后，重启输入法：",
+        f"       fcitx5 -r -d",
+        f"  3. 重新部署并确认状态：",
+        f"       {manager} deploy && {manager} status",
+        f"     看到 'deployed: yes' 和 'input: active' 即已恢复。",
+        f"  如果构建始终静默失败，删除编译缓存后从第 1 步重试：",
+        f"       rm -rf {rime / 'build'}",
+        f"  （build 只是编译缓存，配置和用户词库都在它之外，删除安全。）",
+        f"  另外检查 '{manager} packages'——缺少 fcitx5-rime 或 rime-data"
+        f" 会导致每次构建都失败。",
+    ]
+    for line in steps:
+        print(line, file=sys.stderr)
 
 
 def _human(size: float) -> str:
