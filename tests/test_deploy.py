@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import unittest
 from unittest import mock
@@ -642,6 +643,75 @@ class EnvironmentDeployTests(DeployCase):
         )
         self.assertNotIn(deploy.ENVIRONMENT_TARGET, installed)
         self.assertFalse(self.environment.exists())
+
+
+class BinDeployTests(DeployCase):
+    """The CLI symlink in ~/.local/bin is a deployed artifact like any other.
+
+    It is what puts `ime-manager` on PATH without the user wiring anything by
+    hand, and the manifest is what makes it leave with an uninstall instead of
+    dangling at a plugin that is gone.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.bin = Path(self._tmp.name) / "bin"
+        self.targets[deploy.BIN_TARGET] = self.bin
+        self.manager = Path(deploy.__file__).resolve().parent.parent / "ime-manager"
+        self.link = self.bin / self.manager.name
+
+    def test_a_deploy_links_the_cli_into_the_bin_target(self):
+        self._deploy()
+        self.assertTrue(self.link.is_symlink())
+        self.assertEqual(os.readlink(self.link), str(self.manager))
+
+    def test_it_is_recorded_in_the_manifest_as_created(self):
+        self._deploy()
+        self.assertEqual(
+            self._manifest()[deploy.BIN_TARGET][self.manager.name],
+            {"replaced": False})
+
+    def test_uninstall_removes_the_link(self):
+        self._deploy()
+        deploy.uninstall(self.state, self.targets)
+        self.assertFalse(self.link.is_symlink())
+
+    def test_a_repeat_deploy_leaves_a_correct_link_alone(self):
+        self._deploy()
+        before = self.link.lstat().st_mtime_ns
+        self._deploy()
+        self.assertEqual(self.link.lstat().st_mtime_ns, before)
+
+    def test_a_repeat_deploy_after_a_tampered_link_does_not_back_it_up(self):
+        # The second deploy finds this plugin's own record and keeps it; the
+        # foreign link is simply replaced, not copied into the backups.
+        self._deploy()
+        self.link.unlink()
+        self.link.symlink_to("/somewhere/else")
+        self._deploy()
+        self.assertEqual(os.readlink(self.link), str(self.manager))
+        self.assertEqual(
+            self._manifest()[deploy.BIN_TARGET][self.manager.name],
+            {"replaced": False})
+
+    def test_a_hand_made_file_is_backed_up_and_restored(self):
+        self.bin.mkdir(parents=True)
+        self.link.write_text("# my own ime-manager\n", encoding="utf-8")
+        self._deploy()
+        self.assertEqual(os.readlink(self.link), str(self.manager))
+        deploy.uninstall(self.state, self.targets)
+        self.assertEqual(self.link.read_text(), "# my own ime-manager\n")
+        self.assertFalse(self.link.is_symlink())
+
+    def test_a_target_that_is_not_offered_is_simply_not_written(self):
+        targets = {name: path for name, path in self.targets.items()
+                   if name != deploy.BIN_TARGET}
+        installed = deploy.deploy(
+            settings.resolve({}), targets, self.state, self.payload,
+            asset_provider=self.provider, theme_source=self.theme,
+        )
+        self.assertNotIn(deploy.BIN_TARGET, installed)
+        self.assertFalse(self.bin.exists())
 
 
 class ActiveGroupTests(unittest.TestCase):

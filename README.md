@@ -26,8 +26,8 @@
 
 ```bash
 omarchy plugin add https://github.com/eastgold15/omarchy-ime --enable --yes
+omarchy bar move eastgold15.omarchy.ime --after omarchy.clock
 ```
-omarchy bar move eastgold15.omarchy.ime --after omarchy.clockz
 
 然后安装软件包并部署：
 

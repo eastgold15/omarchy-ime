@@ -185,6 +185,14 @@ ENVIRONMENT_TARGET = "environment"
 # The target the Fcitx5 configuration lives under.
 FCITX5_TARGET = "fcitx5"
 
+# Where the CLI symlink is installed: ~/.local/bin, which Arch puts on PATH by
+# default. A deploy links `ime-manager` there back at the plugin's own copy, so
+# the terminal gets the same entry the panel uses without a hard-coded plugin
+# path in anyone's shell configuration. Recorded in the manifest like every
+# deployed file, because a link left pointing at a removed plugin is exactly
+# the litter the manifest exists to prevent.
+BIN_TARGET = "bin"
+
 
 def default_cache_root() -> Path:
     return assets.default_cache_root()
@@ -790,6 +798,34 @@ def deploy(settings: dict, targets: dict[str, Path], state_dir: Path, payload_di
     for relative, source in sorted(source_files.items()):
         install(SOURCE_TARGET, relative,
                 lambda destination, source=source: shutil.copy2(source, destination))
+
+    # The CLI on PATH (see BIN_TARGET). Not routed through `install`: the
+    # deployed artifact is the symlink itself, and `install` writes regular
+    # files - its `replace_symlink` would delete a correct link on every deploy
+    # just to remake it. A symlink already standing at this name is treated as
+    # this plugin's to replace rather than backed up, because backing up a link
+    # copies whatever it points at - and a dangling one would fail the deploy.
+    bin_root = targets.get(BIN_TARGET)
+    if bin_root is not None:
+        manager = Path(__file__).resolve().parent.parent / "ime-manager"
+        destination = Path(bin_root) / manager.name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        record = previous.get(BIN_TARGET, {}).get(manager.name)
+        if record is None:
+            if destination.is_symlink():
+                record = _entry(False)
+            elif destination.exists():
+                record = _entry(True, _back_up(destination, BIN_TARGET,
+                                               manager.name, state_dir, stamp))
+            else:
+                record = _entry(False)
+        wanted = str(manager)
+        if not (destination.is_symlink() and os.readlink(destination) == wanted):
+            replace_symlink(destination)
+            if destination.exists():
+                destination.unlink()
+            destination.symlink_to(wanted)
+        written.setdefault(BIN_TARGET, {})[manager.name] = record
 
     for target, entries in previous.items():
         root = targets.get(target)

@@ -122,6 +122,7 @@ def targets() -> dict:
         deploy_lib.THEME_TARGET: data_home / "fcitx5" / "themes",
         deploy_lib.ENVIRONMENT_TARGET: environment_dir(),
         hooks.TARGET: hooks_dir(),
+        deploy_lib.BIN_TARGET: Path.home() / ".local" / "bin",
     }
 
 

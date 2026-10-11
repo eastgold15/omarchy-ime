@@ -58,10 +58,14 @@ $IME settings set schemas=rime_ice,double_pinyin_flypy
 ## 部署
 
 ```bash
-~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager deploy
+ime-manager deploy
 ```
 
+（`ime-manager` 也可以写完整路径 `~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager`。）
+
 部署会解析你的设置，如果候选词注释开启（且至少有一个释义方向）则下载注释词典，获取已启用功能所需的固定来源，将 Rime 配置写入 `~/.local/share/fcitx5/rime/`，将 Fcitx5 配置安装到 `~/.config/fcitx5/`，其主题文件安装到 `~/.local/share/fcitx5/themes/`，环境覆盖安装到 `~/.config/environment.d/`，并按目标分组打印它安装的每个路径。
+
+它还会在 `~/.local/bin/ime-manager` 放一个指向插件里 CLI 的软链接——Arch 默认把 `~/.local/bin` 放在 PATH 上，因此部署之后终端里直接敲 `ime-manager` 就能用。这个链接和其他部署文件一样记录在安装清单中，`ime-manager uninstall` 会把它一并移除；如果那个位置已有你自己放的文件，会先备份再替换，卸载时还原。
 
 其中一个文件在你再次登录之前不会做任何事。systemd 在会话启动时读取 `environment.d`，因此部署写入的 `QT_IM_MODULE` 覆盖在**下次登录**时生效，而不是之前——部署会说明这一点，面板也会。
 
