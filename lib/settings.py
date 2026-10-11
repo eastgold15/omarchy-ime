@@ -13,6 +13,8 @@ import re
 import stat
 from pathlib import Path
 
+from lib import dicts
+
 PLUGIN_ID = "eastgold15.omarchy.ime"
 
 # Every Rime schema the plugin can deploy, grouped into the families a person
@@ -170,6 +172,12 @@ PANEL_WIDTH_BOUNDS = (400, 720)
 # value, type, and for integers the accepted range
 DEFAULTS = {
     "schemas": (DEFAULT_SCHEMAS, list, None),
+    # Extra cell dictionaries (lib/dicts) mounted onto every pinyin-family
+    # schema at deploy. Empty by default: the base install is each schema's own
+    # vocabulary and nothing else. Unlike `schemas`, an empty list is a normal
+    # answer, so this list is repaired by dicts.selection rather than
+    # schema_selection.
+    "dictionaries": ([], list, None),
     # The master switch over candidate annotation: the Lua filter, the
     # CC-CEDICT download, and the patch every Chinese schema carries. Off by
     # default - the base install is Rime Ice with nothing extra, and glosses
@@ -393,7 +401,8 @@ def resolve(raw: dict) -> dict:
             # an install that never asked for one gets.
             value = value if usable_image_path(value) else default
         elif kind is list:
-            value = schema_selection(value, default)
+            value = (dicts.selection(value) if key == "dictionaries"
+                     else schema_selection(value, default))
         # A default that is a list is shared with DEFAULTS, so it is copied
         # rather than handed out: a caller that appends to what it was given
         # must not be editing the defaults of every later call.
@@ -450,15 +459,19 @@ def validate(key: str, value):
         # A string is a sequence too, and iterating one would turn "rime_ice"
         # into eight unknown ids, so the type is checked before the members.
         if not isinstance(value, list):
-            raise ValueError(f"{key} takes a list of schema ids, not {value!r}")
+            raise ValueError(f"{key} takes a list of ids, not {value!r}")
+        known = dicts.DICT_IDS if key == "dictionaries" else SCHEMA_IDS
         unknown = [
             item for item in value
-            if not isinstance(item, str) or item not in SCHEMA_IDS
+            if not isinstance(item, str) or item not in known
         ]
         if unknown:
             raise ValueError(
-                f"{key}: no such schema: " + ", ".join(repr(item) for item in unknown)
+                f"{key}: no such entry: " + ", ".join(repr(item) for item in unknown)
             )
+        if key == "dictionaries":
+            # An empty selection is the feature being off, not a mistake.
+            return list(dict.fromkeys(value))
         if not any(item in CHINESE_SCHEMAS for item in value):
             # An empty schema_list leaves Rime with nothing to compose with, and
             # a Japanese-or-English-only one leaves a Chinese keyboard unable to

@@ -1624,6 +1624,62 @@ Panel {
                 spacing: Style.spacing.md
 
                 PanelSectionHeader {
+                  text: "词库"
+                  foreground: root.foreground
+                  fontFamily: root.fontFamily
+                }
+
+                // Extra vocabulary, chosen the same way schemas are: the same
+                // collapsed searchable checklist, the same write path, and the
+                // options asked for rather than written here so the catalogue
+                // lives in exactly one place (lib/dicts.py).
+                MultiSelect {
+                  id: dictionaryPicker
+
+                  width: parent.width
+                  label: "挂载的细胞词库"
+                  optionsCommand: [root.managerPath, "dict", "available", "--json"]
+                  noSelectionText: "不使用词库"
+                  placeholderText: "搜索词库…"
+                  emptyText: "没有找到词库"
+                  foreground: root.foreground
+                  accent: Color.accent
+                  fontFamily: root.fontFamily
+                  enabled: !root.settingsLocked
+                  values: root.settingValue("dictionaries", [])
+
+                  Connections {
+                    target: root
+                    function onSettingValuesChanged() {
+                      dictionaryPicker.values = root.settingValue("dictionaries", [])
+                    }
+                  }
+
+                  onChanged: function(selection) {
+                    root.writeSetting("dictionaries", selection, "挂载的细胞词库")
+                  }
+                }
+
+                Text {
+                  width: parent.width
+                  // What the reader cannot see: that the cells only reach
+                  // pinyin-family schemas, and that the first deploy after a
+                  // selection downloads them.
+                  text: "词库对拼音类方案（全拼、双拼）生效，下次部署时下载并编译。注音、形码和日语方案不受影响。"
+                  color: root.dim
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                  wrapMode: Text.WordWrap
+                }
+              }
+
+              PanelSeparator { foreground: root.foreground }
+
+              Column {
+                width: parent.width
+                spacing: Style.spacing.md
+
+                PanelSectionHeader {
                   text: "候选词窗口"
                   foreground: root.foreground
                   fontFamily: root.fontFamily

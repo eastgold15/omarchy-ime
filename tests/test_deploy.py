@@ -6,7 +6,7 @@ from unittest import mock
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from lib import assets, deploy, generate, settings, theme
+from lib import assets, deploy, dicts, generate, settings, theme
 from tests.test_assets import cedict
 
 # The selection that asks for the Japanese schemas, and so for their payload
@@ -352,14 +352,16 @@ class AssetDeployTests(DeployCase):
         self._deploy()
         self.assertEqual(self.provider_calls, [])
 
+    # Every source is needed at once: the Japanese two by their schemas, the
+    # cell dictionaries by selecting the whole catalogue.
     def test_selecting_the_japanese_schemas_resolves_every_source_they_need(self):
-        self._deploy(schemas=JAPANESE)
+        self._deploy(schemas=JAPANESE, dictionaries=list(dicts.DICT_IDS))
         self.assertEqual(
             sorted(self.provider_calls), sorted(assets.SOURCE_FILES)
         )
 
     def test_extracted_files_land_at_their_mapped_paths(self):
-        self._deploy(schemas=JAPANESE)
+        self._deploy(schemas=JAPANESE, dictionaries=list(dicts.DICT_IDS))
         for name, files in assets.SOURCE_FILES.items():
             for inside, relative in files.items():
                 landed = self.rime / relative

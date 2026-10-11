@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib import deploy as deploy_lib  # noqa: E402
-from lib import assets, features, hooks, hyprland, imestate, packages, settings  # noqa: E402
+from lib import assets, dicts, features, hooks, hyprland, imestate, packages, settings  # noqa: E402
 
 VERSION = "0.1.0"
 
@@ -549,6 +549,69 @@ def cmd_schema(args) -> int:
     return 0
 
 
+def cmd_dict(args) -> int:
+    """Browse and select the cell dictionaries deployed with the schemas.
+
+    The selection is the `dictionaries` setting, so `add` and `remove` go
+    through the same write path as `settings set`: shell.json is the one place
+    the truth lives, and the panel's dictionary picker reads the same list this
+    command prints.
+    """
+    if args.action in ("available", "list"):
+        selected = set(settings.load(shell_json()).get("dictionaries", []))
+        options = dicts.options()
+        if args.action == "list":
+            query = (args.ids[0] if args.ids else "").lower()
+            if query:
+                options = [
+                    option for option in options
+                    if query in option["value"].lower()
+                    or query in option["label"].lower()
+                    or query in option["description"].lower()
+                ]
+        if args.json:
+            if args.action == "available":
+                print(json.dumps(options, ensure_ascii=False))
+            else:
+                print(json.dumps(
+                    [dict(option, selected=option["value"] in selected)
+                     for option in options],
+                    ensure_ascii=False))
+            return 0
+        for option in options:
+            mark = "*" if option["value"] in selected else " "
+            print(f"{mark} {option['value']}  {option['label']}  ({option['description']})")
+        if args.action == "list":
+            print("\n* = 已选择，部署后生效（ime-manager dict add/remove 修改）")
+        return 0
+
+    current = settings.load(shell_json()).get("dictionaries", [])
+    chosen = set(current)
+    unknown = [dict_id for dict_id in args.ids if dict_id not in dicts.DICT_IDS]
+    if unknown:
+        print("ime-manager: no such dictionary: " + ", ".join(unknown)
+              + "（ime-manager dict list 查看全部）", file=sys.stderr)
+        return 1
+    if args.action == "add":
+        chosen.update(args.ids)
+    else:
+        chosen.difference_update(args.ids)
+    try:
+        resolved = settings.save(shell_json(), {"dictionaries": sorted(chosen)})
+    except ValueError as error:
+        print(f"ime-manager: {error}", file=sys.stderr)
+        return 1
+    written = resolved["dictionaries"]
+    labels = {option["value"]: option["label"] for option in dicts.options()}
+    if written:
+        print(f"已选择 {len(written)} 个词库："
+              + "、".join(labels[dict_id] for dict_id in written)
+              + "，部署后生效")
+    else:
+        print("已清空词库选择，部署后生效")
+    return 0
+
+
 # The Fcitx5 addon that draws the candidate window. Reloading its configuration
 # is what makes it re-read the theme, and it is the lightest thing that does:
 # restarting Fcitx5 would repaint the window at the cost of every application's
@@ -715,6 +778,16 @@ def main(argv=None) -> int:
     schema.add_argument("--json", action="store_true")
     schema.set_defaults(handler=cmd_schema)
 
+    dictionary = sub.add_parser(
+        "dict", help="browse and select extra cell dictionaries")
+    dictionary.add_argument("action", choices=["available", "list", "add", "remove"])
+    dictionary.add_argument("ids", nargs="*", metavar="ID",
+                            help="dictionary ids (add/remove only)")
+    dictionary.add_argument(
+        "--json", action="store_true",
+        help="available: the picker's option list; list: with selection state")
+    dictionary.set_defaults(handler=cmd_dict)
+
     theme = sub.add_parser("theme", help="follow the Omarchy theme")
     theme.add_argument("action", choices=["apply"])
     theme.set_defaults(handler=cmd_theme)
@@ -726,6 +799,8 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if args.command == "schema" and args.action == "set" and not args.schema:
         parser.error("schema set needs a schema id")
+    if args.command == "dict" and args.action in ("add", "remove") and not args.ids:
+        parser.error(f"dict {args.action} needs at least one dictionary id")
     return args.handler(args)
 
 

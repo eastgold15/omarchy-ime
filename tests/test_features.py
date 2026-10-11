@@ -106,9 +106,9 @@ class RenderedFilesAreUnchangedTests(unittest.TestCase):
 class FeatureRecordTests(unittest.TestCase):
     """Each record only names things that exist."""
 
-    def test_the_two_features_are_declared(self):
+    def test_the_features_are_declared(self):
         self.assertEqual([feature.id for feature in features.FEATURES],
-                         ["annotation", "japanese"])
+                         ["annotation", "japanese", "cells"])
 
     def test_ids_are_unique(self):
         ids = [feature.id for feature in features.FEATURES]
@@ -150,7 +150,10 @@ class FeatureRecordTests(unittest.TestCase):
             if feature.setting is not None:
                 with self.subTest(feature=feature.id):
                     self.assertIn(feature.setting, feature.settings)
-                    self.assertIs(settings.DEFAULTS[feature.setting][1], bool)
+                    # Usually a boolean switch; a list setting is its own
+                    # switch - `dictionaries` is on while it names a cell.
+                    self.assertIn(settings.DEFAULTS[feature.setting][1],
+                                  (bool, list))
 
     def test_a_feature_that_patches_schemas_has_a_renderer_and_vice_versa(self):
         for feature in features.FEATURES:

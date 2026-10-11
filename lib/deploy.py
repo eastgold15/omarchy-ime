@@ -36,7 +36,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
-from lib import assets, features, generate, settings as settings_lib, theme as theme_lib
+from lib import assets, dicts, features, generate, settings as settings_lib, theme as theme_lib
 
 MANIFEST_NAME = "installed.json"
 
@@ -522,6 +522,11 @@ def needed_sources(settings: dict) -> list[str]:
         for name in features.SCHEMA_SOURCES.get(schema, ()):
             if name not in ordered:
                 ordered.append(name)
+    # The cell-dictionary source is selected by a list, not by a schema, so the
+    # per-schema mapping above cannot express it. The feature's own record
+    # answers "is it on", so the setting is not spelled out here.
+    if features.CELLS.enabled(settings):
+        ordered.append(dicts.SOURCE)
     return ordered
 
 
@@ -728,6 +733,19 @@ def deploy(settings: dict, targets: dict[str, Path], state_dir: Path, payload_di
         effective["schemas"] = [
             schema for schema in _selected(settings) if schema not in withheld
         ]
+    if dicts.SOURCE in unusable and features.CELLS.enabled(effective):
+        # The wrapper would import tables that are not on disk, which is a
+        # schema that fails to build - the failure this whole block exists to
+        # prevent. Deploying without the cells keeps every schema on its base
+        # dictionary, and the setting keeps its value for the next deploy that
+        # can fetch.
+        if effective is settings:
+            effective = dict(settings)
+        effective[features.CELLS.setting] = []
+        announce(
+            WARNING + "cells: the selected vocabulary tables could not be"
+            " fetched and none are on disk yet; deploying without them"
+        )
 
     # Every file a failed source owns, whether or not it was fetched this time.
     # These are never swept: the sweep exists to remove what this configuration

@@ -18,6 +18,7 @@
     "defaultSection": "right",
     "defaults": {
       "schemas": ["rime_ice"],
+      "dictionaries": [],
       "annotation": false,
       "annotateChinese": true,
       "annotateEnglish": true,
@@ -134,6 +135,31 @@
             "value": "sno_japanese",
             "description": "日语"
           }
+        ]
+      },
+      {
+        "key": "dictionaries",
+        "type": "multiselect",
+        "label": "细胞词库",
+        "description": "挂载到拼音类输入方案的额外词汇，来自白霜拼音（rime-frost）的分类词库，下次部署时下载并编译。注音、形码和日语方案不使用全拼编码，词库对它们不生效。",
+        "noSelectionText": "不使用词库",
+        "placeholderText": "搜索词库...",
+        "emptyText": "无词库",
+        "defaultValue": [],
+        "options": [
+          { "value": "exthot", "label": "网络热词", "description": "互联网流行词和新词" },
+          { "value": "name2", "label": "人名", "description": "中文姓名" },
+          { "value": "place", "label": "地名", "description": "中国地名" },
+          { "value": "history", "label": "历史", "description": "历史人物与事件" },
+          { "value": "idiom", "label": "成语", "description": "成语和四字词语" },
+          { "value": "literature", "label": "文学", "description": "诗词与文学作品词汇" },
+          { "value": "game", "label": "游戏", "description": "游戏名称与术语" },
+          { "value": "food", "label": "美食", "description": "菜名与食品" },
+          { "value": "medication", "label": "医药", "description": "药品与医学术语" },
+          { "value": "sport", "label": "体育", "description": "运动项目与体育术语" },
+          { "value": "animal", "label": "动物", "description": "动物名称" },
+          { "value": "computer", "label": "计算机", "description": "计算机与互联网术语" },
+          { "value": "shulihua", "label": "数理化", "description": "数学、物理与化学术语" }
         ]
       },
       {

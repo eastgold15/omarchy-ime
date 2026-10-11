@@ -36,6 +36,8 @@ import zlib
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from lib import dicts
+
 # The prefix a notice wears when it is something that went wrong. lib/deploy.py
 # takes its own WARNING from here so the two never drift apart: the panel and
 # the command line both split notices on this string.
@@ -61,6 +63,13 @@ SOURCES = {
     "rime-snomiao": {
         "url": "https://github.com/snomiao/rime-snomiao.git",
         "revision": "a2f3e7c7505abe567ec282ce61f754885c413e88",
+    },
+    # 白霜拼音 (rime-frost), for the cn_dicts_cell category dictionaries -
+    # see lib/dicts.py. The clone also carries that project's schemas and its
+    # own base tables; only the cell files named in SOURCE_FILES are taken.
+    "rime-frost": {
+        "url": "https://github.com/gaboolic/rime-frost.git",
+        "revision": "64d24e89341aee133c0ad0f09b5f47a695e3d508",
     },
 }
 
@@ -226,6 +235,13 @@ SOURCE_FILES = {
         "Rime/opencc/zhjp_daily.txt": "opencc/zhjp_daily.txt",
         "Rime/opencc/zhjp_word.txt": "opencc/zhjp_word.txt",
     },
+    # Every cell dictionary in lib/dicts.CATALOG, installed under its own name
+    # because Rime requires the file name to equal the `name:` inside it. The
+    # whole set is fetched and installed while any cell is selected - the clone
+    # is one fetch either way, and the files are small beside the schemas that
+    # read them. Only the selected ones reach an `import_tables`, so only those
+    # are ever compiled.
+    "rime-frost": dicts.SOURCE_FILES,
 }
 
 # Which schema needs which of these sources is the schema's feature's business,

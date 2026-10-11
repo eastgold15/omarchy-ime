@@ -40,6 +40,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Mapping
 
+from lib import dicts
 from lib import settings as settings_lib
 
 
@@ -251,7 +252,36 @@ JAPANESE = Feature(
 )
 
 
-FEATURES = (ANNOTATION, JAPANESE)
+# --- cell dictionaries -------------------------------------------------------
+#
+# Switched on by a non-empty `dictionaries` list rather than a boolean - the
+# list itself is the switch. The patch is one line: the schema's translator
+# stops naming its base table and names the generated wrapper that imports the
+# base plus the selected cells (lib/dicts renders the wrapper). The wrapper
+# files are generated, and the cell tables themselves arrive through the
+# rime-frost source; both halves are handled in lib/deploy, which also strips
+# the selection for a deploy whose fetch failed, so an unreachable upstream
+# means "no cells this time" rather than an unbuildable schema.
+def _cells_patch(settings: dict, schema: str, context: PatchContext) -> list[str]:
+    return [f"  translator/dictionary: {dicts.wrapper_name(schema)}"]
+
+
+CELLS = Feature(
+    id="cells",
+    setting="dictionaries",
+    schemas=(),
+    groups=(),
+    # Not declared per schema: the source is needed while any cell is selected,
+    # whatever schemas are. lib/deploy.needed_sources reads it from lib/dicts.
+    sources={},
+    dictionary=False,
+    settings=("dictionaries",),
+    patched=frozenset(dicts.CELL_SCHEMAS),
+    patch=_cells_patch,
+)
+
+
+FEATURES = (ANNOTATION, JAPANESE, CELLS)
 
 
 # --- the views the other modules read ----------------------------------------
