@@ -1227,13 +1227,13 @@ Panel {
             // onto the accent through the same tokens it already uses.
             Button {
               id: deployButton
-              text: root.busy ? "正在处理…" : (root.settingsDirty ? "部署以应用" : "部署")
+              text: root.busy ? "正在处理…" : (root.settingsDirty ? "部署以应用更改" : "部署")
               iconText: root.busy ? "󰑓" : "󰆓"
               iconSpinning: deployProcess.running
               bordered: true
               foreground: root.settingsDirty ? Color.accent : root.foreground
               accent: Color.accent
-              tooltipText: "用下面的设置写入配置（D）"
+              tooltipText: "写入配置并重建 Rime，等同于 ime-manager deploy（D）"
               onClicked: root.deploy()
             }
 
@@ -1250,14 +1250,14 @@ Panel {
               // elevation is Omarchy's `pkg add`, not this plugin's, and the
               // only thing the user needs from this sentence is that a window
               // will open and ask them for a password.
-              tooltipText: "在终端窗口中安装缺失的软件包，终端会询问你的密码（I）"
+              tooltipText: "在终端窗口中安装缺失的软件包，终端会询问你的密码，等同于 ime-manager packages install（I）"
               onClicked: root.installPackages()
             }
 
             PanelActionButton {
               iconText: "󰑐"
               size: actionRow.lineHeight
-              tooltipText: "刷新状态、设置和输入方案（R）"
+              tooltipText: "重新读取状态、设置和输入方案，等同于 ime-manager status（R）"
               foreground: root.foreground
               enabled: !root.busy
               onClicked: root.refreshEverything()
@@ -1865,7 +1865,7 @@ Panel {
             bordered: true
             foreground: Color.accent
             accent: Color.accent
-            tooltipText: "用这些设置重写配置（D）"
+            tooltipText: "写入配置并重建 Rime，等同于 ime-manager deploy（D）"
             onClicked: root.deploy()
           }
         }
