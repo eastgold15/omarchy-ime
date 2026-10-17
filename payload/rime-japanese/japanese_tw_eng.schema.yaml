@@ -1,6 +1,6 @@
 # japanese_tw_eng.schema.yaml
 #
-# A schema composed for the eastgold15.omarchy.ime Omarchy plugin. It is not upstream's
+# A schema composed for the io.github.eastgold15.omarchy.ime Omarchy plugin. It is not upstream's
 # file, and it is not a copy of one: it is snomiao's sno_jpn_wubi86_eng schema
 # with the wubi and emoji components dropped and rime_ice put in place of its
 # pinyin. Most of the lookup, filter and reverse-lookup blocks below are that
@@ -24,7 +24,7 @@ schema:
     - snomiao <snomiao@gmail.com>
   description: |
     Mixed Pinyin, Romaji, and English input with reverse lookup.
-    Composed for the eastgold15.omarchy.ime Omarchy plugin from snomiao's
+    Composed for the io.github.eastgold15.omarchy.ime Omarchy plugin from snomiao's
     sno_jpn_wubi86_eng schema (github.com/snomiao/rime-snomiao).
   dependencies:
     - japanese_pinyin

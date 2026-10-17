@@ -611,7 +611,7 @@ class ThemeHookTests(unittest.TestCase):
         # It cannot be mis-expanded if it is never expanded. `theme apply` reads
         # whichever palette Omarchy has just made current, which is the same
         # answer and is also right when the hook is run by hand.
-        body = hooks.script("/home/someone/plugins/eastgold15.omarchy.ime/ime-manager")
+        body = hooks.script("/home/someone/plugins/io.github.eastgold15.omarchy.ime/ime-manager")
         code = [line for line in body.splitlines()
                 if line.strip() and not line.startswith("#")]
         for line in code:
@@ -620,14 +620,14 @@ class ThemeHookTests(unittest.TestCase):
             self.assertNotIn("$*", line)
 
     def test_every_expansion_in_the_hook_is_quoted(self):
-        body = hooks.script("/home/someone/A Plugin Dir/eastgold15.omarchy.ime/ime-manager")
+        body = hooks.script("/home/someone/A Plugin Dir/io.github.eastgold15.omarchy.ime/ime-manager")
         code = [line for line in body.splitlines()
                 if line.strip() and not line.startswith("#")]
         for line in code:
             for unquoted in re.finditer(r'(?<!")\$[A-Za-z_][A-Za-z0-9_]*(?!")', line):
                 # An assignment's right-hand side is quoted by shlex instead.
                 self.assertIn("=", line[:unquoted.start()], line)
-        self.assertIn("'/home/someone/A Plugin Dir/eastgold15.omarchy.ime/ime-manager'", body)
+        self.assertIn("'/home/someone/A Plugin Dir/io.github.eastgold15.omarchy.ime/ime-manager'", body)
 
     def test_a_manager_path_with_metacharacters_is_quoted_whole(self):
         body = hooks.script("/tmp/x; rm -rf ~/'; touch /tmp/pwned; '")

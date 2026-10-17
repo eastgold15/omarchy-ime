@@ -15,7 +15,7 @@ from pathlib import Path
 
 from lib import dicts
 
-PLUGIN_ID = "eastgold15.omarchy.ime"
+PLUGIN_ID = "io.github.eastgold15.omarchy.ime"
 
 # Every Rime schema the plugin can deploy, grouped into the families a person
 # actually chooses between. The family is what makes a list of twenty

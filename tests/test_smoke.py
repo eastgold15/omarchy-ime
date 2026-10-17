@@ -92,7 +92,7 @@ class ManagerDictionaryTests(unittest.TestCase):
         path = self.config / "omarchy" / "shell.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"bar": {"layout": {"right": [
-            {"id": "eastgold15.omarchy.ime", **values},
+            {"id": "io.github.eastgold15.omarchy.ime", **values},
         ]}}}), encoding="utf-8")
 
     def expected(self) -> Path:
@@ -262,7 +262,7 @@ class ManagerSettingsCommandTests(unittest.TestCase):
         self.shell_json.parent.mkdir(parents=True)
         self.write_shell_json({
             "bar": {"layout": {"right": [
-                {"id": "eastgold15.omarchy.ime", "pageSize": 7},
+                {"id": "io.github.eastgold15.omarchy.ime", "pageSize": 7},
                 {"id": "omarchy.battery", "warnAt": 15},
             ]}},
         })
@@ -276,7 +276,7 @@ class ManagerSettingsCommandTests(unittest.TestCase):
     def entry(self) -> dict:
         document = json.loads(self.shell_json.read_text(encoding="utf-8"))
         for candidate in document["bar"]["layout"]["right"]:
-            if candidate.get("id") == "eastgold15.omarchy.ime":
+            if candidate.get("id") == "io.github.eastgold15.omarchy.ime":
                 return candidate
         raise AssertionError("the widget entry disappeared")
 

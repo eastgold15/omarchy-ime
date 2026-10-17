@@ -2,7 +2,7 @@
 
 一个 Omarchy 状态栏插件，掌管整个输入法：它安装 Fcitx5 和 Rime，根据少量开关生成它们的配置，并在状态栏上用实时输入状态指示器取代 `omarchy.keyboard-layout`——因为决定一次按键是否变成中文的是 Fcitx5 状态，而不是键盘布局。
 
-插件 id：`eastgold15.omarchy.ime`。
+插件 id：`io.github.eastgold15.omarchy.ime`。
 
 ## 功能
 
@@ -26,14 +26,14 @@
 
 ```bash
 omarchy plugin add https://github.com/eastgold15/omarchy-ime --enable --yes
-omarchy bar move eastgold15.omarchy.ime --after omarchy.clock
+omarchy bar move io.github.eastgold15.omarchy.ime --after omarchy.clock
 ```
 
 然后安装软件包并部署：
 
 ```bash
-~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager packages install
-~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager deploy
+~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager packages install
+~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager deploy
 ```
 
 两点安装后要做的事：
@@ -48,8 +48,8 @@ omarchy bar move eastgold15.omarchy.ime --after omarchy.clock
 顺序很重要：先还原部署，再移除插件。
 
 ```bash
-~/.config/omarchy/plugins/eastgold15.omarchy.ime/ime-manager uninstall
-omarchy plugin remove eastgold15.omarchy.ime
+~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager uninstall
+omarchy plugin remove io.github.eastgold15.omarchy.ime
 ```
 
 `uninstall` 删除插件创建的文件、从备份恢复它覆盖的文件，并移除主题钩子和环境覆盖。你的 Rime 用户数据（学到的短语、同步状态）绝不被触碰。软件包（`fcitx5`、`rime-ice-git` 等）被有意留下，想要它们消失请自行移除。

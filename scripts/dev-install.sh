@@ -13,7 +13,7 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
 # 插件 id —— 必须和 manifest.json 里的 "id" 完全一致。
 # 改 id 时两边一起改，否则 shell 会当成另一个插件。
-ID="eastgold15.omarchy.ime"
+ID="io.github.eastgold15.omarchy.ime"
 
 # Omarchy 加载插件的位置。
 DEST="$HOME/.config/omarchy/plugins/$ID"

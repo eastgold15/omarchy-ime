@@ -1,6 +1,6 @@
 # sno_japanese.schema.yaml
 #
-# A schema composed for the eastgold15.omarchy.ime Omarchy plugin: Japanese romaji input
+# A schema composed for the io.github.eastgold15.omarchy.ime Omarchy plugin: Japanese romaji input
 # and nothing else. It is not upstream's file, and it is not a copy of one, but
 # the parts that make it work are upstream's - the speller algebra, the
 # japanese_lookup and japanese_reverse_lookup blocks, the `xlit|q|ー|` formats
@@ -26,7 +26,7 @@ schema:
     - snomiao <snomiao@gmail.com>
   description: |
     Focused Japanese Romaji input.
-    Composed for the eastgold15.omarchy.ime Omarchy plugin from snomiao's
+    Composed for the io.github.eastgold15.omarchy.ime Omarchy plugin from snomiao's
     sno_jpn_wubi86_eng schema (github.com/snomiao/rime-snomiao) and
     ensigma96's japanese schema (github.com/gkovacs/rime-japanese).
 
