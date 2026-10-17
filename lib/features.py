@@ -7,7 +7,7 @@ input, switched on by selecting one of its schemas. Each is one `Feature`
 record here, and every module that acts on a feature reads that record instead
 of keeping a table of its own: lib/deploy.py asks it which payload groups to
 install and which pinned sources to fetch, lib/generate.py asks it what to
-write into a schema's customization file, and ime-manager asks it where a
+write into a schema's customization file, and omarchy.ime asks it where a
 feature's schema yaml lives before it is deployed. The tables those modules
 used to keep - `GROUP_SCHEMAS`, `SCHEMA_SOURCES`, `ANNOTATED_SCHEMAS` - are
 either gone or derived from the records below, and tests/test_features.py

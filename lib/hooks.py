@@ -23,7 +23,7 @@ contract is:
 
 Installing the hook is part of this plugin's lifecycle rather than a step in a
 README, which means it has to come back out. It is recorded in the same install
-manifest as every deployed file, so `ime-manager uninstall` removes it with
+manifest as every deployed file, so `omarchy.ime uninstall` removes it with
 everything else and no hook is left behind pointing at a plugin that is gone.
 """
 from __future__ import annotations
@@ -66,8 +66,8 @@ def script(manager_path) -> str:
     that is also right when the hook is run by hand.
     """
     return f"""#!/usr/bin/env bash
-# Installed by the io.github.eastgold15.omarchy.ime Omarchy plugin (`ime-manager hook install`).
-# Removed by `ime-manager hook remove` and by `ime-manager uninstall`.
+# Installed by the io.github.eastgold15.omarchy.ime Omarchy plugin (`omarchy.ime hook install`).
+# Removed by `omarchy.ime hook remove` and by `omarchy.ime uninstall`.
 #
 # Runs when the Omarchy theme changes, with the new theme's name as $1, and
 # repaints the Fcitx5 candidate window to match.
@@ -75,7 +75,7 @@ def script(manager_path) -> str:
 # It cannot fail. omarchy-hook prints "Hook failed" for any non-zero exit, and
 # the ordinary reasons this has nothing to do - the plugin was moved, Fcitx5 is
 # not running yet at login - are not worth saying on every theme switch. Run
-# `ime-manager theme apply` by hand to see what it would have said.
+# `omarchy.ime theme apply` by hand to see what it would have said.
 MANAGER={shlex.quote(str(manager_path))}
 [ -x "$MANAGER" ] || exit 0
 "$MANAGER" theme apply >/dev/null 2>&1 || exit 0

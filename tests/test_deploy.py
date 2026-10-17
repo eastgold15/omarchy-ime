@@ -239,7 +239,7 @@ class DeployTests(DeployCase):
         self.assertEqual(stat.S_IMODE(private.stat().st_mode), 0o600)
 
     def test_the_directories_a_removal_empties_go_too(self):
-        # An empty ~/.local/share/fcitx5/themes/omarchy-ime is worse than
+        # An empty ~/.local/share/fcitx5/themes/omarchy.ime is worse than
         # litter: fcitx5-configtool lists it as a theme.
         self._deploy()
         deploy.uninstall(self.state, self.targets)
@@ -650,7 +650,7 @@ class EnvironmentDeployTests(DeployCase):
 class BinDeployTests(DeployCase):
     """The CLI symlink in ~/.local/bin is a deployed artifact like any other.
 
-    It is what puts `ime-manager` on PATH without the user wiring anything by
+    It is what puts `omarchy.ime` on PATH without the user wiring anything by
     hand, and the manifest is what makes it leave with an uninstall instead of
     dangling at a plugin that is gone.
     """
@@ -659,7 +659,7 @@ class BinDeployTests(DeployCase):
         super().setUp()
         self.bin = Path(self._tmp.name) / "bin"
         self.targets[deploy.BIN_TARGET] = self.bin
-        self.manager = Path(deploy.__file__).resolve().parent.parent / "ime-manager"
+        self.manager = Path(deploy.__file__).resolve().parent.parent / "omarchy.ime"
         self.link = self.bin / self.manager.name
 
     def test_a_deploy_links_the_cli_into_the_bin_target(self):
@@ -698,11 +698,11 @@ class BinDeployTests(DeployCase):
 
     def test_a_hand_made_file_is_backed_up_and_restored(self):
         self.bin.mkdir(parents=True)
-        self.link.write_text("# my own ime-manager\n", encoding="utf-8")
+        self.link.write_text("# my own omarchy.ime\n", encoding="utf-8")
         self._deploy()
         self.assertEqual(os.readlink(self.link), str(self.manager))
         deploy.uninstall(self.state, self.targets)
-        self.assertEqual(self.link.read_text(), "# my own ime-manager\n")
+        self.assertEqual(self.link.read_text(), "# my own omarchy.ime\n")
         self.assertFalse(self.link.is_symlink())
 
     def test_a_target_that_is_not_offered_is_simply_not_written(self):
@@ -744,10 +744,10 @@ class DictionaryDeployTests(DeployCase):
         deploy.deploy(
             settings.resolve({"annotation": True}), self.targets, self.state, self.payload,
             asset_provider=self.provider,
-            dictionary_path="/cache/omarchy-ime/dictionary/v0-test/cedict.txt",
+            dictionary_path="/cache/omarchy.ime/dictionary/v0-test/cedict.txt",
         )
         content = (self.rime / "rime_ice.custom.yaml").read_text()
-        self.assertIn("/cache/omarchy-ime/dictionary/v0-test/cedict.txt", content)
+        self.assertIn("/cache/omarchy.ime/dictionary/v0-test/cedict.txt", content)
         self.assertIn("annotate/dictionary", content)
 
     def test_the_dictionary_is_not_copied_into_the_rime_directory(self):

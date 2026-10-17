@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "io.github.eastgold15.omarchy.ime",
-  "name": "输入法",
+  "name": "omarchy.ime",
   "version": "0.1.0",
   "author": "ryuhzk",
   "license": "MIT",
@@ -13,7 +13,7 @@
     "barWidget": "Panel.qml"
   },
   "barWidget": {
-    "displayName": "输入法",
+    "displayName": "omarchy.ime",
     "description": "实时输入状态、schema 切换，以及所有 Fcitx5 和 Rime 设置，都在一处。",
     "category": "系统",
     "allowMultiple": false,

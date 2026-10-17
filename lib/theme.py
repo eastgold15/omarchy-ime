@@ -68,7 +68,7 @@ from lib.settings import BACKGROUND_IMAGE_KEYS, usable_image_path
 # told to use. Deliberately the plugin's own name and not the Omarchy theme's:
 # a directory named after the theme would be a new directory on every switch,
 # and every previous one would be left behind for the user to find.
-DIRECTORY = "omarchy-ime"
+DIRECTORY = "omarchy.ime"
 
 # What is used when there is no Omarchy theme to read. Neutral greys, no
 # borrowed palette: a light accent so the selected candidate reads as selected,

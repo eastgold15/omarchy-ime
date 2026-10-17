@@ -12,7 +12,7 @@ import qs.Ui
 // when Fcitx5 is not there at all.
 //
 // The panel itself never touches the filesystem. Everything it reads and every
-// effect it asks for goes through the plugin's own `ime-manager` command, so
+// effect it asks for goes through the plugin's own `omarchy.ime` command, so
 // there is exactly one place to audit what this plugin does to a machine.
 //
 // The one exception is the bar's own poll, which talks to `fcitx5-remote` and
@@ -35,7 +35,7 @@ Panel {
   property string inputState: "closed"
   property string currentSchema: ""
 
-  // Attention state, from `ime-manager status --json`.
+  // Attention state, from `omarchy.ime status --json`.
   property var packagesMissing: []
   property bool dictionaryReady: false
   // Whether anything would read the dictionary: false while candidate
@@ -62,7 +62,7 @@ Panel {
   property string installResult: ""
   property bool installOk: true
 
-  // What a deploy said that was not a file path. `ime-manager` prints one
+  // What a deploy said that was not a file path. `omarchy.ime` prints one
   // `target/relative` line per installed file, and everything else it prints is
   // the part the user cannot work out for themselves: a theme that could not be
   // read, so the candidate window has stopped following the desktop; a source
@@ -85,7 +85,7 @@ Panel {
   // The value `settingsWrites` had when the running deploy began.
   property int deployPending: 0
 
-  // Settings as `ime-manager settings get --json` resolved them. The bar also
+  // Settings as `omarchy.ime settings get --json` resolved them. The bar also
   // injects the raw entry into `settings`, but that copy has no defaults filled
   // in and arrives whenever the bar happens to reload shell.json, so the
   // manager's answer is the one the controls follow.
@@ -116,7 +116,7 @@ Panel {
   property int backgroundImageFocus: 0
   readonly property bool editingBackgroundImage: backgroundImageFocus > 0
 
-  // The Rime schemas, from `ime-manager schema list --json`. A schema is a
+  // The Rime schemas, from `omarchy.ime schema list --json`. A schema is a
   // different thing from the Fcitx5 input method the header reports: it is what
   // Rime's own F4 menu switches, and it is what decides whether a keystroke
   // becomes pinyin, romaji, or English.
@@ -232,7 +232,7 @@ Panel {
   readonly property string pluginDir: decodeURIComponent(
     String(Qt.resolvedUrl(".")).replace(/^file:\/\//, "").replace(/\/$/, "")
   )
-  readonly property string managerPath: pluginDir + "/ime-manager"
+  readonly property string managerPath: pluginDir + "/omarchy.ime"
 
   // Settable, the way the sibling translation plugin's panel is: the same
   // `panelWidth` integer on the widget's own entry, with the same bounded read
@@ -367,7 +367,7 @@ Panel {
   }
 
   // The readable name Rime compiled into the current schema, which is what the
-  // panel already asks `ime-manager schema list --json` for. Two fallbacks, in
+  // panel already asks `omarchy.ime schema list --json` for. Two fallbacks, in
   // the order of how much they still say: the schema's own id, which is what
   // Rime calls it and is honest when the name map has not been read yet, and
   // then the empty string, which only happens when Rime has not named a schema
@@ -531,8 +531,8 @@ Panel {
   }
 
   // Settings live on this widget's own entry in shell.json. The panel reads
-  // them through `ime-manager settings get` and changes them through
-  // `ime-manager settings set`, so the controls below are the same write path a
+  // them through `omarchy.ime settings get` and changes them through
+  // `omarchy.ime settings set`, so the controls below are the same write path a
   // hand edit takes - validation included.
   function settingValue(key, fallback) {
     if (settingValues && settingValues[key] !== undefined && settingValues[key] !== null) {
@@ -569,7 +569,7 @@ Panel {
 
   // One reading of everything the bar paints, with Python nowhere in it.
   //
-  // `ime-manager state --json` spends 64ms of CPU, nearly all of it Python
+  // `omarchy.ime state --json` spends 64ms of CPU, nearly all of it Python
   // interpreter startup, to print three fields; `fcitx5-remote` is the same
   // question asked of the same daemon and answers for 1.1ms, and gdbus asks
   // Rime for the current schema for 1.7ms. Polled forever, that is the
@@ -1233,7 +1233,7 @@ Panel {
               bordered: true
               foreground: root.settingsDirty ? Color.accent : root.foreground
               accent: Color.accent
-              tooltipText: "写入配置并重建 Rime，等同于 ime-manager deploy（D）"
+              tooltipText: "写入配置并重建 Rime，等同于 omarchy.ime deploy（D）"
               onClicked: root.deploy()
             }
 
@@ -1250,14 +1250,14 @@ Panel {
               // elevation is Omarchy's `pkg add`, not this plugin's, and the
               // only thing the user needs from this sentence is that a window
               // will open and ask them for a password.
-              tooltipText: "在终端窗口中安装缺失的软件包，终端会询问你的密码，等同于 ime-manager packages install（I）"
+              tooltipText: "在终端窗口中安装缺失的软件包，终端会询问你的密码，等同于 omarchy.ime packages install（I）"
               onClicked: root.installPackages()
             }
 
             PanelActionButton {
               iconText: "󰑐"
               size: actionRow.lineHeight
-              tooltipText: "重新读取状态、设置和输入方案，等同于 ime-manager status（R）"
+              tooltipText: "重新读取状态、设置和输入方案，等同于 omarchy.ime status（R）"
               foreground: root.foreground
               enabled: !root.busy
               onClicked: root.refreshEverything()
@@ -1724,7 +1724,7 @@ Panel {
                 //
                 // Plain TextFields rather than a browse button: the shell's Ui/
                 // ships no file picker, and this panel does no filesystem work of
-                // its own anyway - the path goes to `ime-manager`, which is the one
+                // its own anyway - the path goes to `omarchy.ime`, which is the one
                 // place that opens files and the only place that judges them.
                 // `writeSetting` hands the value over as its own argv element, so a
                 // path with spaces in it needs no quoting here.
@@ -1921,7 +1921,7 @@ Panel {
             bordered: true
             foreground: Color.accent
             accent: Color.accent
-            tooltipText: "写入配置并重建 Rime，等同于 ime-manager deploy（D）"
+            tooltipText: "写入配置并重建 Rime，等同于 omarchy.ime deploy（D）"
             onClicked: root.deploy()
           }
         }

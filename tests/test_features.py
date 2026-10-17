@@ -30,7 +30,7 @@ PAYLOAD = ROOT / "payload"
 FIXTURE = ROOT / "tests" / "fixtures" / "rendered.sha256.json"
 
 # The dictionary path baked into the schema files. Fixed, so the hashes are.
-DICTIONARY = "/cache/omarchy-ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt"
+DICTIONARY = "/cache/omarchy.ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt"
 
 # Representative configurations. `annotation: True` is asked for explicitly:
 # these hashes describe the rendering with glosses on, and the master switch

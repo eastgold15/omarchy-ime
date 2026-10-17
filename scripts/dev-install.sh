@@ -32,8 +32,8 @@ rsync -a --delete \
   "$ROOT/" "$DEST/"
 
 # 复制不会自己保留可执行位以外的约定，确保 CLI 和脚本可直接运行。
-# 这个项目没有 bin/ 目录，CLI 就是根目录下的 ime-manager。
-chmod +x "$DEST/ime-manager" "$DEST/scripts/"*.sh
+# 这个项目没有 bin/ 目录，CLI 就是根目录下的 omarchy.ime。
+chmod +x "$DEST/omarchy.ime" "$DEST/scripts/"*.sh
 
 # 让 shell 重新扫描插件列表（新增插件时才需要，已有插件这步很快）。
 # 命令不存在时静默跳过，不影响手动安装的场景。

@@ -57,7 +57,7 @@ def _run(command: list[str]) -> tuple[int | None, str, str]:
 
     Guarded and bounded like lib/imestate._run and lib/theme.read_radius: an
     absent `omarchy`, or one that hangs, is a report this plugin cannot make -
-    never a traceback out of `ime-manager status --json`, which the panel polls
+    never a traceback out of `omarchy.ime status --json`, which the panel polls
     forever.
 
     stderr is carried out rather than dropped. It is the only thing that can
@@ -76,7 +76,7 @@ def _run(command: list[str]) -> tuple[int | None, str, str]:
 def _run_attached(command: list[str]) -> int | None:
     """Run a command with this process's own terminal.
 
-    Nothing is captured, on purpose: this is the path taken when `ime-manager`
+    Nothing is captured, on purpose: this is the path taken when `omarchy.ime`
     is being run by a person in a terminal, and sudo can only ask for a
     password down a tty it can still see.
     """

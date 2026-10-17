@@ -16,33 +16,33 @@ not of an isolated one.
 | Piece                                            | What it is                                         | When it runs                                        |
 | ------------------------------------------------ | -------------------------------------------------- | --------------------------------------------------- |
 | `Panel.qml`                                      | The bar widget                                     | While the bar is up                                 |
-| `ime-manager`                                    | A Python 3 command line, stdlib only               | When a person or the panel asks it to               |
+| `omarchy.ime`                                    | A Python 3 command line, stdlib only               | When a person or the panel asks it to               |
 | `~/.config/omarchy/hooks/theme-set.d/io.github.eastgold15.omarchy.ime` | A three-line shell shim, installed only on request | On every Omarchy theme change                       |
 | `payload/rime/lua/annotate.lua`                  | A librime-lua filter                               | Inside `fcitx5`, on every keystroke while composing |
 
 `Panel.qml` performs no filesystem writes at all. Everything the plugin does to
-a machine goes through `ime-manager`, which is one file tree to audit rather
-than two. The panel's only privilege is to run `ime-manager` and a handful of
+a machine goes through `omarchy.ime`, which is one file tree to audit rather
+than two. The panel's only privilege is to run `omarchy.ime` and a handful of
 read-only queries (`fcitx5-remote`, `gdbus call … GetCurrentSchema`), each as an
 argument vector; there is no shell anywhere in the plugin.
 
 ## What it writes
 
-`ime-manager deploy` writes into exactly five directories, and records every
-file it writes in an install manifest so that `ime-manager uninstall` can undo
+`omarchy.ime deploy` writes into exactly five directories, and records every
+file it writes in an install manifest so that `omarchy.ime uninstall` can undo
 it:
 
 | Target        | Directory                                               |
 | ------------- | ------------------------------------------------------- |
 | `rime`        | `$XDG_DATA_HOME/fcitx5/rime`                            |
 | `fcitx5`      | `$XDG_CONFIG_HOME/fcitx5`                               |
-| `themes`      | `$XDG_DATA_HOME/fcitx5/themes/omarchy-ime`              |
+| `themes`      | `$XDG_DATA_HOME/fcitx5/themes/omarchy.ime`              |
 | `environment` | `$XDG_CONFIG_HOME/environment.d/10-omarchy-fcitx.conf`  |
 | `hooks`       | `$XDG_CONFIG_HOME/omarchy/hooks/theme-set.d/io.github.eastgold15.omarchy.ime` |
 
 It also writes `$XDG_CONFIG_HOME/omarchy/shell.json` — its own entry on the bar,
 and only the keys it was asked to change — and caches downloads under
-`$XDG_CACHE_HOME/omarchy-ime`. State lives in `$XDG_STATE_HOME/omarchy-ime`.
+`$XDG_CACHE_HOME/omarchy.ime`. State lives in `$XDG_STATE_HOME/omarchy.ime`.
 
 Nothing is written outside the user's home. The only path under `/` the plugin
 names at all is `/etc/vconsole.conf`, which it reads to find the console keymap
@@ -53,7 +53,7 @@ the tree and that the function reading it contains no write call.
 **Files this plugin did not create are restored, not deleted.** Omarchy ships
 some of the files under `~/.config/fcitx5`, and the Fcitx5 `profile` is the
 user's own. When a deploy writes over a file that was already there, it copies
-the original into `$XDG_STATE_HOME/omarchy-ime/backups` first and records in the
+the original into `$XDG_STATE_HOME/omarchy.ime/backups` first and records in the
 manifest that this was a replacement. `uninstall` puts those back and deletes
 only what the plugin created. If a backup cannot be reached, the file is left
 exactly where it is — a missing backup is a reason to touch nothing.
@@ -84,7 +84,7 @@ mode the existing file had so that a save never tightens or loosens it.
 This is the part most worth a reviewer's attention, because it is the part that
 was wrong.
 
-`$XDG_STATE_HOME/omarchy-ime/installed.json` records every file the plugin
+`$XDG_STATE_HOME/omarchy.ime/installed.json` records every file the plugin
 wrote, whether it created or replaced each one, and where the backup of a
 replaced file lives. `uninstall` reads it in a later process and acts on every
 path it names: it unlinks what the manifest calls a created file, and copies a
@@ -231,17 +231,17 @@ argument list is handed to `execve`, and no shell is involved.
 
 ## The theme hook
 
-`ime-manager hook install` writes a three-line shim into
+`omarchy.ime hook install` writes a three-line shim into
 `~/.config/omarchy/hooks/theme-set.d/`, which `omarchy-hook` runs as
 `bash "$hook" "$THEME_NAME"` on every theme change. The theme name arrives as
-`$1` **and is never expanded**: the shim runs `ime-manager theme apply`, which
+`$1` **and is never expanded**: the shim runs `omarchy.ime theme apply`, which
 reads whichever palette Omarchy has just made current — the same answer, and one
 that is also right when the hook is run by hand. The only expansion in the
 script is the manager's own path, written through `shlex.quote` and used only
 inside double quotes.
 
 Installing the hook is part of the plugin's lifecycle, so it is recorded in the
-same manifest as everything else and `ime-manager uninstall` takes it away. No
+same manifest as everything else and `omarchy.ime uninstall` takes it away. No
 hook is left behind pointing at a plugin that is gone.
 
 ## What this plugin deliberately does not do
@@ -253,7 +253,7 @@ hook is left behind pointing at a plugin that is gone.
   `omarchy-pkg-add` / `omarchy-pkg-aur-add` inside the one-liner handed to
   Omarchy's floating-terminal launcher when there is no tty for `sudo` to prompt
   on. The elevation is theirs, not this plugin's. Nothing privileged happens as
-  part of a deploy; it is behind an explicit `ime-manager packages install`.
+  part of a deploy; it is behind an explicit `omarchy.ime packages install`.
   Asserted in `tests/test_packages.py::PrivilegeSurfaceTests`.
 - **No service lifecycle changes.** The only `systemctl` command anywhere is
   `systemctl --user is-active omarchy-fcitx5.service`, which asks and changes
@@ -263,7 +263,7 @@ hook is left behind pointing at a plugin that is gone.
 - **No execution of downloaded content.** See above.
 - **No `shell=True`, `os.system`, `os.popen` or `subprocess.getoutput`
   anywhere.** Every subprocess is an argument vector.
-  `tests/test_security.py::SubprocessSurfaceTests` scans `lib/`, `ime-manager`
+  `tests/test_security.py::SubprocessSurfaceTests` scans `lib/`, `omarchy.ime`
   and `Panel.qml` for all four, and asserts that the scan really matched those
   files. The single place the plugin composes shell _text_ is
   `packages.install_script`, a one-liner for a terminal launcher that takes one;

@@ -15,11 +15,11 @@ from lib import assets
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# ime-manager is an extensionless script rather than a module on the path, so it
+# omarchy.ime is an extensionless script rather than a module on the path, so it
 # is loaded by location with an explicit loader.
 _spec = importlib.util.spec_from_file_location(
-    "ime_manager", ROOT / "ime-manager",
-    loader=importlib.machinery.SourceFileLoader("ime_manager", str(ROOT / "ime-manager")),
+    "omarchy_ime", ROOT / "omarchy.ime",
+    loader=importlib.machinery.SourceFileLoader("omarchy_ime", str(ROOT / "omarchy.ime")),
 )
 manager = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(manager)
@@ -59,7 +59,7 @@ NOT_REBUILT = {
 class SmokeTests(unittest.TestCase):
     def test_manager_reports_version(self):
         result = subprocess.run(
-            [sys.executable, str(ROOT / "ime-manager"), "--version"],
+            [sys.executable, str(ROOT / "omarchy.ime"), "--version"],
             capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0)
@@ -248,7 +248,7 @@ class ManagerDictionaryTests(unittest.TestCase):
 
 
 class ManagerSettingsCommandTests(unittest.TestCase):
-    """`ime-manager settings` is the only way the panel changes anything.
+    """`omarchy.ime settings` is the only way the panel changes anything.
 
     The panel passes every value as a string, so the parsing here is what turns
     a clicked toggle into a real boolean in shell.json.
@@ -282,7 +282,7 @@ class ManagerSettingsCommandTests(unittest.TestCase):
 
     def run_manager(self, *arguments) -> subprocess.CompletedProcess:
         return subprocess.run(
-            [sys.executable, str(ROOT / "ime-manager"), *arguments],
+            [sys.executable, str(ROOT / "omarchy.ime"), *arguments],
             capture_output=True, text=True,
             env={**os.environ, "XDG_CONFIG_HOME": str(self.config)},
         )

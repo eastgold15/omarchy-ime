@@ -34,7 +34,7 @@ class HookPathTests(unittest.TestCase):
 
 
 class HookScriptTests(unittest.TestCase):
-    MANAGER = "/home/someone/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager"
+    MANAGER = "/home/someone/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime"
 
     def script(self, manager=MANAGER):
         return hooks.script(manager)
@@ -52,8 +52,8 @@ class HookScriptTests(unittest.TestCase):
         self.assertIn("exit 0", self.script())
 
     def test_the_path_is_shell_quoted(self):
-        text = hooks.script("/home/some one/plugins/io.github.eastgold15.omarchy.ime/ime-manager")
-        self.assertIn("'/home/some one/plugins/io.github.eastgold15.omarchy.ime/ime-manager'", text)
+        text = hooks.script("/home/some one/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime")
+        self.assertIn("'/home/some one/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime'", text)
 
     def test_it_is_a_bash_script(self):
         self.assertTrue(self.script().startswith("#!"))
@@ -68,7 +68,7 @@ class HookInstallTests(unittest.TestCase):
         self.hooks = root / "config" / "omarchy" / "hooks" / "theme-set.d"
         self.state = root / "state"
         self.state.mkdir(parents=True)
-        self.manager = root / "plugin" / "ime-manager"
+        self.manager = root / "plugin" / "omarchy.ime"
         self.manager.parent.mkdir(parents=True)
         self.manager.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
 
@@ -210,7 +210,7 @@ class HookBehaviourTests(unittest.TestCase):
         self.addCleanup(self._tmp.cleanup)
         self.root = Path(self._tmp.name)
         self.record = self.root / "argv"
-        self.manager = self.root / "ime-manager"
+        self.manager = self.root / "omarchy.ime"
 
     def write_manager(self, code=0, executable=True):
         self.manager.write_text(

@@ -3,7 +3,7 @@
 Date: 2026-08-25
 Status: built, and deployed on this machine. Reconciled against the code
 2026-08-25.
-Repo: `~/Work/omarchy-ime`
+Repo: `~/Work/omarchy.ime`
 Plugin id: `io.github.eastgold15.omarchy.ime`
 
 This is the design record, not the manual — the README is the manual. Several
@@ -61,10 +61,10 @@ environment file that currently belongs to nobody.
 ## Architecture
 
 ```
-~/Work/omarchy-ime/
+~/Work/omarchy.ime/
   manifest.json             plugin declaration + settings schema
   Panel.qml                 bar widget: live state, status, toggles, deploy
-  ime-manager               the CLI, and the only thing that writes outside
+  omarchy.ime               the CLI, and the only thing that writes outside
                             the plugin directory
   lib/                      what the CLI does, one concern per module
     settings.py             defaults, validation, reading and writing shell.json
@@ -92,14 +92,14 @@ its publisher's format, so there is nothing to convert. Both are decisions that
 were taken the other way first, and both are recorded below.
 
 `Panel.qml` never touches the filesystem outside the plugin directory. It reads
-settings, shows state, and invokes `ime-manager`. All filesystem work — writing
-Rime config, fetching assets, triggering deploys — happens in `ime-manager` and
+settings, shows state, and invokes `omarchy.ime`. All filesystem work — writing
+Rime config, fetching assets, triggering deploys — happens in `omarchy.ime` and
 the `lib/` modules it calls, so there is one place to audit, test, and reason
 about failure.
 
 ### Generated, not edited
 
-`ime-manager` writes `default.custom.yaml` and `rime_ice.custom.yaml` **whole**,
+`omarchy.ime` writes `default.custom.yaml` and `rime_ice.custom.yaml` **whole**,
 from templates plus the current settings. It never reads an existing file and
 edits parts of it.
 
@@ -227,7 +227,7 @@ Source is CC-CEDICT, downloaded from its publisher, MDBG, and read exactly as
 published. `lib/assets.py` fetches
 `https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz`,
 decompresses it — gzip is the only thing removed — and caches it at
-`~/.cache/omarchy-ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt`. The filter parses
+`~/.cache/omarchy.ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt`. The filter parses
 upstream's own line format, `Traditional Simplified [pin1 yin1] /gloss/gloss/`,
 and builds both lookup directions from it at load time, so there is one file to
 download regardless of which directions are enabled.
@@ -286,7 +286,7 @@ Switching is layered, because two different things are called switching:
   is the same switch Rime's F4 menu operates, so a click and the F4 menu cannot
   disagree. `lib/imestate.py` calls them through `gdbus` — the plugin is
   stdlib-only, and `lib/deploy.py` already talks to Fcitx5 that way — and
-  `ime-manager schema list|get|set` exposes them.
+  `omarchy.ime schema list|get|set` exposes them.
 
   The interface hands out schema ids and no names. The only name that exists
   without inventing one is the `schema/name` Rime compiles into
@@ -294,7 +294,7 @@ Switching is layered, because two different things are called switching:
   id: a schema this plugin has never heard of is still one the user can switch
   to, and calling it by its id is honest.
 
-Schema switching is reachable from `ime-manager` today; the panel does not show
+Schema switching is reachable from `omarchy.ime` today; the panel does not show
 a switcher for either layer yet.
 
 State is read once when the bar item is constructed and then on a timer — every
@@ -310,7 +310,7 @@ dictionary, and the two external Rime dictionary sources for Japanese
 (`rime-japanese`, `rime-snomiao`). The two Japanese sources are pinned by commit
 — the pins the fetch uses are `SOURCES` in `lib/assets.py`, and `sources/*.rev`
 records the same two commits — and the pin is part of the cache path,
-`~/.cache/omarchy-ime/sources/<name>/<revision>/`, so re-enabling is free and a
+`~/.cache/omarchy.ime/sources/<name>/<revision>/`, so re-enabling is free and a
 pin change is a distinct directory rather than an in-place update. A `.complete`
 marker is written last, so a directory without one is a fetch that died partway
 and is discarded rather than trusted.
@@ -335,7 +335,7 @@ own. The rule is that no network failure may leave the user unable to type.
 
 ## Deployment
 
-`ime-manager deploy` is the single entry point:
+`omarchy.ime deploy` is the single entry point:
 
 1. Resolve settings from the widget's entry in `shell.json`
 2. Download the annotation dictionary if either direction is on, and clone the
@@ -343,7 +343,7 @@ own. The rule is that no network failure may leave the user unable to type.
 3. Generate the Rime customization files and the candidate window's theme, and
    install them along with the payload groups the settings select and the files
    named out of the fetched sources — into `~/.local/share/fcitx5/rime/`,
-   `~/.config/fcitx5/`, and `~/.local/share/fcitx5/themes/omarchy-ime/`
+   `~/.config/fcitx5/`, and `~/.local/share/fcitx5/themes/omarchy.ime/`
 4. Delete whatever the previous manifest listed and this deploy did not write,
    and put the theme-set hook's entry back in the manifest
 5. Ask Rime to rebuild, and read the journal to find out whether it did
@@ -377,7 +377,7 @@ every half second for up to eight seconds. A failure is reported the moment one
 of the known build-error lines appears; success is only declared once the window
 closes without one, because a successful build says nothing at all.
 
-A rebuild that failed, or that could not be triggered, makes `ime-manager deploy`
+A rebuild that failed, or that could not be triggered, makes `omarchy.ime deploy`
 exit non-zero, print what Rime wrote, and say plainly that the configuration is
 on disk but is not in effect. That is the failure worth being loudest about: it
 is the one that leaves someone unable to type.
@@ -389,7 +389,7 @@ The candidate window's theme is generated at deploy time from the palette at
 `decoration:rounding`. That alone would leave the window painted in the old
 theme until the next deploy, so switching themes is handled on its own path.
 
-`ime-manager theme apply` is the narrow version of a deploy: it regenerates the
+`omarchy.ime theme apply` is the narrow version of a deploy: it regenerates the
 theme files, writes only the ones whose contents actually changed, and reloads a
 single Fcitx5 addon — `classicui`, which draws the candidate window — instead of
 restarting Fcitx5 and dropping every application's input context. It does no
@@ -397,12 +397,12 @@ download, no Rime rebuild and no package check, and it does nothing at all befor
 the first deploy, because files written while nothing is in the manifest are
 files an uninstall would leave behind.
 
-`ime-manager hook install` attaches that to Omarchy. `omarchy-theme-set` ends by
+`omarchy.ime hook install` attaches that to Omarchy. `omarchy-theme-set` ends by
 running `omarchy-hook theme-set <name>`, which runs every file in
 `~/.config/omarchy/hooks/theme-set.d/`, so the hook is one file there, named
 `io.github.eastgold15.omarchy.ime` after the plugin rather than after the hook — the directory is
 shared with every other plugin on the machine. It is a three-line shim that runs
-`ime-manager theme apply` and cannot fail: `omarchy-hook` prints "Hook failed"
+`omarchy.ime theme apply` and cannot fail: `omarchy-hook` prints "Hook failed"
 for any non-zero exit, and the ordinary reasons this has nothing to do — the
 plugin was moved, Fcitx5 is not up yet at login — are not worth saying on every
 theme switch. The theme name arrives as `$1` and is ignored, because `theme
@@ -410,7 +410,7 @@ apply` reads whichever palette Omarchy has just made current, which is the same
 answer and is also the right one when the command is run by hand.
 
 The hook is recorded in the same install manifest as every deployed file, so
-`ime-manager uninstall` takes it away with everything else and no hook is left
+`omarchy.ime uninstall` takes it away with everything else and no hook is left
 pointing at a plugin that is gone. A deploy rebuilds the manifest from the files
 it wrote, and the hook is not one of them, so a deploy re-records it afterwards
 rather than dropping it — and the hook's directory is kept out of the targets a
@@ -419,7 +419,7 @@ deploy writes into, or every deploy would delete the hook as a stale file.
 ### The manifest
 
 Every file a deploy writes is recorded in a manifest under
-`~/.local/state/omarchy-ime/installed.json`, so `ime-manager uninstall`
+`~/.local/state/omarchy.ime/installed.json`, so `omarchy.ime uninstall`
 removes exactly what was installed and nothing else. Files the user created are
 never touched.
 
@@ -441,7 +441,7 @@ the plugin's generated files. Removing the module is what closes that hazard.
 
 ## Testing
 
-`ime-manager` is testable without a running Fcitx5, and `./check` runs the whole
+`omarchy.ime` is testable without a running Fcitx5, and `./check` runs the whole
 suite. Generation takes settings and returns file contents rather than writing
 them, so the tests assert on generated content for each toggle combination that
 matters — Japanese on and off, each annotation direction on and off, pinyin on
@@ -462,7 +462,7 @@ input works, toggle the hotkey, confirm the annotation appears and disappears.
 
 ## Decisions taken
 
-1. **Name.** `omarchy-ime` / `io.github.eastgold15.omarchy.ime`.
+1. **Name.** `omarchy.ime` / `io.github.eastgold15.omarchy.ime`.
 2. **Package installation is the plugin's job.** It calls `omarchy pkg add` for
    the official packages and `omarchy pkg aur add` for `rime-ice-git` when any
    are missing. A solution that configures an input method but leaves the user
@@ -524,6 +524,6 @@ engine/translators/-` and took the whole schema build down with it, so the
 ## Open decisions
 
 None. One decided thing is not built out: the panel shows no switcher for either
-input methods or Rime schemas, though `lib/imestate.py` and `ime-manager schema`
+input methods or Rime schemas, though `lib/imestate.py` and `omarchy.ime schema`
 have what one would need. Reassess the deferred Hyprland and environment items
 now that the plugin deploys a working setup.

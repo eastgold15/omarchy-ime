@@ -253,7 +253,7 @@ def cache_path(name: str, revision: str, cache_root: Path) -> Path:
 
 
 # How long a clone may take before it is given up on. Without it a stalled
-# connection hangs `ime-manager deploy` for ever, and from the panel that is a
+# connection hangs `omarchy.ime deploy` for ever, and from the panel that is a
 # spinner with no cancel and no explanation. The dictionary download has always
 # had its own timeout; this is the same bound on the other half of the network.
 FETCH_TIMEOUT = 300
@@ -344,7 +344,7 @@ def ensure(name: str, cache_root: Path, fetcher=_git_fetch) -> Path | None:
 
 def default_cache_root() -> Path:
     """Where assets are cached when no caller says otherwise."""
-    return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "omarchy-ime"
+    return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "omarchy.ime"
 
 
 def dictionary_url() -> str:
@@ -354,7 +354,7 @@ def dictionary_url() -> str:
 def dictionary_path(cache_root: Path) -> Path:
     """Where the dictionary lives, whether or not it has been downloaded.
 
-    This is the one place that answers the question, so ime-manager can report
+    This is the one place that answers the question, so omarchy.ime can report
     the path and generate.py can write it into the schema without either of them
     re-deriving the layout. It does not depend on which upstream release is
     cached: the absolute path is baked into the Rime schema at deploy time, and a

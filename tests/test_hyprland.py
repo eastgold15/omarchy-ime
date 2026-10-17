@@ -253,7 +253,7 @@ class ToggleConfigurationScanTests(unittest.TestCase):
 
 
 class ReportTests(unittest.TestCase):
-    """Both answers together, which is what `ime-manager status` carries."""
+    """Both answers together, which is what `omarchy.ime status` carries."""
 
     def test_it_reports_both_pieces(self):
         runner = FakeHyprctl(getoption=BLUR_ON,

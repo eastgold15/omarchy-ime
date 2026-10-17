@@ -20,11 +20,11 @@ from lib import hooks, hyprland
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# ime-manager is an extensionless script rather than a module on the path, so it
+# omarchy.ime is an extensionless script rather than a module on the path, so it
 # is loaded by location with an explicit loader.
 _spec = importlib.util.spec_from_file_location(
-    "ime_manager", ROOT / "ime-manager",
-    loader=importlib.machinery.SourceFileLoader("ime_manager", str(ROOT / "ime-manager")),
+    "omarchy_ime", ROOT / "omarchy.ime",
+    loader=importlib.machinery.SourceFileLoader("omarchy_ime", str(ROOT / "omarchy.ime")),
 )
 manager = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(manager)
@@ -45,7 +45,7 @@ def run(*argv):
 
 
 class SchemaCommandTests(unittest.TestCase):
-    """`ime-manager schema` is the panel's only way to change schema."""
+    """`omarchy.ime schema` is the panel's only way to change schema."""
 
     def test_list_json_carries_the_id_the_name_and_the_current_mark(self):
         with mock.patch.object(manager.imestate, "describe_schemas",
@@ -118,7 +118,7 @@ class ApplyThemeTests(unittest.TestCase):
         # Laid out so that the XDG redirection below makes manager.themes_dir()
         # and manager.state_dir() resolve to exactly these two directories.
         self.themes = root / "data" / "fcitx5" / "themes"
-        self.state = root / "omarchy-ime"
+        self.state = root / "omarchy.ime"
         self.state.mkdir(parents=True)
         patcher = mock.patch.dict("os.environ", {
             "XDG_STATE_HOME": str(root),
@@ -188,7 +188,7 @@ class ApplyThemeTests(unittest.TestCase):
 
     def test_the_command_never_runs_a_deploy(self):
         """It is on the theme-switch path, so it must not download or rebuild."""
-        rendered = {"omarchy-ime/theme.conf": "[Metadata]\n"}
+        rendered = {"omarchy.ime/theme.conf": "[Metadata]\n"}
         with mock.patch.object(manager, "theme_renderer",
                                return_value=lambda: rendered), \
              mock.patch.object(manager.imestate, "reload_addon", return_value=True), \
@@ -200,7 +200,7 @@ class ApplyThemeTests(unittest.TestCase):
         deploy.assert_not_called()
         redeploy.assert_not_called()
         fetch.assert_not_called()
-        self.assertTrue((self.themes / "omarchy-ime" / "theme.conf").is_file())
+        self.assertTrue((self.themes / "omarchy.ime" / "theme.conf").is_file())
 
     def test_a_missing_theme_generator_is_reported_rather_than_traced(self):
         with mock.patch.object(manager, "theme_renderer",
@@ -211,7 +211,7 @@ class ApplyThemeTests(unittest.TestCase):
 
     def test_the_reload_targets_the_addon_that_draws_the_candidate_window(self):
         """classicui is what paints the candidate window and loads the theme."""
-        rendered = {"omarchy-ime/theme.conf": "[Metadata]\n"}
+        rendered = {"omarchy.ime/theme.conf": "[Metadata]\n"}
         with mock.patch.object(manager, "theme_renderer",
                                return_value=lambda: rendered), \
              mock.patch.object(manager.imestate, "reload_addon",
@@ -259,7 +259,7 @@ class ManagerHookCommandTests(unittest.TestCase):
 
     def test_the_installed_hook_points_at_this_checkout(self):
         run("hook", "install")
-        self.assertIn(str(ROOT / "ime-manager"),
+        self.assertIn(str(ROOT / "omarchy.ime"),
                       self.hook_path().read_text(encoding="utf-8"))
 
     def test_install_records_the_hook_so_uninstall_will_remove_it(self):
@@ -441,7 +441,7 @@ class HyprlandStatusTests(unittest.TestCase):
 
 
 class SchemaAvailableTests(unittest.TestCase):
-    """`ime-manager schema available` is what fills the settings picker.
+    """`omarchy.ime schema available` is what fills the settings picker.
 
     It is the counterpart of `schema list`: `list` reports what Rime actually
     has built and is composing with, while `available` reports what the settings

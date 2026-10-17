@@ -122,7 +122,7 @@ class UpstreamDictionaryTests(unittest.TestCase):
 
     def test_nothing_of_ours_is_served_as_the_dictionary(self):
         url = assets.dictionary_url()
-        self.assertNotIn("omarchy-ime", url)
+        self.assertNotIn("omarchy.ime", url)
         self.assertNotIn("/releases/download/", url)
 
     def test_the_cached_file_keeps_upstreams_name(self):

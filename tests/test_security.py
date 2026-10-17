@@ -24,12 +24,12 @@ from lib import assets, deploy, generate, hooks, imestate, settings, theme
 ROOT = Path(__file__).resolve().parent.parent
 FILTER = ROOT / "payload" / "rime" / "lua" / "annotate.lua"
 
-# ime-manager is an extensionless script rather than a module on the path, so it
+# omarchy.ime is an extensionless script rather than a module on the path, so it
 # is loaded by location. Two of the writes worth attacking are its own.
 _spec = importlib.util.spec_from_file_location(
-    "ime_manager_security", ROOT / "ime-manager",
+    "omarchy_ime_security", ROOT / "omarchy.ime",
     loader=importlib.machinery.SourceFileLoader(
-        "ime_manager_security", str(ROOT / "ime-manager")),
+        "omarchy_ime_security", str(ROOT / "omarchy.ime")),
 )
 manager = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(manager)
@@ -77,7 +77,7 @@ class ManifestCase(unittest.TestCase):
 
 
 class HostileManifestTests(ManifestCase):
-    """Whoever can write ~/.local/state/omarchy-ime/installed.json.
+    """Whoever can write ~/.local/state/omarchy.ime/installed.json.
 
     The manifest is the plugin's own state, written by a deploy and read back by
     an uninstall in a later process. The whitelist that decides what a deploy may
@@ -253,7 +253,7 @@ class HostileSymlinkTests(ManifestCase):
         directory = self.root / "hooks"
         directory.mkdir()
         (directory / hooks.HOOK_NAME).symlink_to(self.outsider)
-        hooks.install(directory, self.root / "ime-manager", self.state)
+        hooks.install(directory, self.root / "omarchy.ime", self.state)
         self.assertEqual(self.outsider.read_text(encoding="utf-8"),
                          "the user's own file\n")
         self.assertFalse((directory / hooks.HOOK_NAME).is_symlink())
@@ -558,7 +558,7 @@ class SubprocessSurfaceTests(unittest.TestCase):
         nothing.
         """
         paths = sorted((ROOT / "lib").glob("*.py"))
-        paths.append(ROOT / "ime-manager")
+        paths.append(ROOT / "omarchy.ime")
         paths.append(ROOT / "Panel.qml")
         for path in paths:
             yield path, path.read_text(encoding="utf-8")
@@ -566,7 +566,7 @@ class SubprocessSurfaceTests(unittest.TestCase):
     def test_every_running_source_is_actually_scanned(self):
         scanned = {path.name for path, _ in self.sources()}
         for name in ("deploy.py", "assets.py", "packages.py", "imestate.py",
-                     "hyprland.py", "theme.py", "ime-manager", "Panel.qml"):
+                     "hyprland.py", "theme.py", "omarchy.ime", "Panel.qml"):
             self.assertIn(name, scanned)
 
     def test_no_subprocess_call_uses_a_shell(self):
@@ -611,7 +611,7 @@ class ThemeHookTests(unittest.TestCase):
         # It cannot be mis-expanded if it is never expanded. `theme apply` reads
         # whichever palette Omarchy has just made current, which is the same
         # answer and is also right when the hook is run by hand.
-        body = hooks.script("/home/someone/plugins/io.github.eastgold15.omarchy.ime/ime-manager")
+        body = hooks.script("/home/someone/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime")
         code = [line for line in body.splitlines()
                 if line.strip() and not line.startswith("#")]
         for line in code:
@@ -620,14 +620,14 @@ class ThemeHookTests(unittest.TestCase):
             self.assertNotIn("$*", line)
 
     def test_every_expansion_in_the_hook_is_quoted(self):
-        body = hooks.script("/home/someone/A Plugin Dir/io.github.eastgold15.omarchy.ime/ime-manager")
+        body = hooks.script("/home/someone/A Plugin Dir/io.github.eastgold15.omarchy.ime/omarchy.ime")
         code = [line for line in body.splitlines()
                 if line.strip() and not line.startswith("#")]
         for line in code:
             for unquoted in re.finditer(r'(?<!")\$[A-Za-z_][A-Za-z0-9_]*(?!")', line):
                 # An assignment's right-hand side is quoted by shlex instead.
                 self.assertIn("=", line[:unquoted.start()], line)
-        self.assertIn("'/home/someone/A Plugin Dir/io.github.eastgold15.omarchy.ime/ime-manager'", body)
+        self.assertIn("'/home/someone/A Plugin Dir/io.github.eastgold15.omarchy.ime/omarchy.ime'", body)
 
     def test_a_manager_path_with_metacharacters_is_quoted_whole(self):
         body = hooks.script("/tmp/x; rm -rf ~/'; touch /tmp/pwned; '")

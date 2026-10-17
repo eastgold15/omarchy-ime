@@ -32,12 +32,28 @@ def rime_dir() -> Path:
     return _xdg("XDG_DATA_HOME", ".local/share") / "fcitx5" / "rime"
 
 
+def _migrate_legacy(base_var: str, base_default: str) -> Path:
+    """命名规范 omarchy-ime -> omarchy.ime 的一次性目录迁移。
+
+    旧目录存在且新目录不存在时整体改名;失败只警告不崩溃(下次启动重试)。
+    """
+    base = _xdg(base_var, base_default)
+    current = base / "omarchy.ime"
+    legacy = base / "omarchy-ime"
+    if legacy.is_dir() and not current.exists():
+        try:
+            legacy.rename(current)
+        except OSError as error:
+            print(f"omarchy.ime: 无法迁移旧目录 {legacy} -> {current}: {error}", file=sys.stderr)
+    return current
+
+
 def state_dir() -> Path:
-    return _xdg("XDG_STATE_HOME", ".local/state") / "omarchy-ime"
+    return _migrate_legacy("XDG_STATE_HOME", ".local/state")
 
 
 def cache_dir() -> Path:
-    return _xdg("XDG_CACHE_HOME", ".cache") / "omarchy-ime"
+    return _migrate_legacy("XDG_CACHE_HOME", ".cache")
 
 
 def shell_json() -> Path:
@@ -157,7 +173,7 @@ def cmd_deploy(_args) -> int:
             deploy_lib.WARNING + "packages: "
             + ", ".join(absent["missing"])
             + " are not installed, so Rime cannot build this configuration;"
-              " run `ime-manager packages install` first"
+              " run `omarchy.ime packages install` first"
         )
 
     # A feature that is switched off is said so, once, in the deploy that
@@ -168,7 +184,7 @@ def cmd_deploy(_args) -> int:
         if feature.setting is not None and not feature.enabled(resolved):
             print(
                 f"{feature.id}: off; turn it on in the panel or with"
-                f" `ime-manager settings set {feature.setting}=true`"
+                f" `omarchy.ime settings set {feature.setting}=true`"
             )
 
     # Downloading the dictionary is part of resolving where it is: a failure
@@ -213,11 +229,11 @@ def cmd_deploy(_args) -> int:
         since=deploy_lib.newest_write(installed, deploy_targets()),
     )
     if not rebuild["succeeded"]:
-        print(f"ime-manager: {rebuild['detail']}", file=sys.stderr)
+        print(f"omarchy.ime: {rebuild['detail']}", file=sys.stderr)
         for line in rebuild["errors"]:
             print(f"  {line}", file=sys.stderr)
         print(
-            "ime-manager: 配置已写入磁盘但尚未生效；"
+            "omarchy.ime: 配置已写入磁盘但尚未生效；"
             "修复之前输入可能无法使用",
             file=sys.stderr,
         )
@@ -376,7 +392,7 @@ def cmd_status(args) -> int:
             print("annotation: on")
         else:
             print("annotation: off (no glosses; turn it on in the panel or with"
-                  " `ime-manager settings set annotation=true`)")
+                  " `omarchy.ime settings set annotation=true`)")
         if result.get("dictionary_needed", True):
             print(f"dictionary: {'present' if result['dictionary'] else 'not downloaded'}")
         elif result["dictionary"]:
@@ -447,7 +463,7 @@ def cmd_settings(args) -> int:
         _print_settings(settings.load(shell_json()), args.json)
         return 0
     if not args.assignment:
-        print("ime-manager: settings set needs at least one KEY=VALUE", file=sys.stderr)
+        print("omarchy.ime: settings set needs at least one KEY=VALUE", file=sys.stderr)
         return 1
     try:
         values = dict(parse_assignment(argument) for argument in args.assignment)
@@ -455,7 +471,7 @@ def cmd_settings(args) -> int:
             shell_json(), {key: parse_value(value, key) for key, value in values.items()}
         )
     except ValueError as error:
-        print(f"ime-manager: {error}", file=sys.stderr)
+        print(f"omarchy.ime: {error}", file=sys.stderr)
         return 1
     _print_settings(resolved, args.json)
     return 0
@@ -473,7 +489,7 @@ def cmd_packages(args) -> int:
     """
     checked = packages.check()
     if checked["error"]:
-        print(f"ime-manager: could not check packages: {checked['error']}",
+        print(f"omarchy.ime: could not check packages: {checked['error']}",
               file=sys.stderr)
         return 1
     absent = checked["missing"]
@@ -490,7 +506,7 @@ def cmd_packages(args) -> int:
     if ok:
         print(detail)
         return 0
-    print(f"ime-manager: {detail}", file=sys.stderr)
+    print(f"omarchy.ime: {detail}", file=sys.stderr)
     return 1
 
 
@@ -524,7 +540,7 @@ def cmd_schema(args) -> int:
             return 0
         if not described:
             print(
-                "ime-manager: no schemas; is Fcitx5 running with the Rime addon?",
+                "omarchy.ime: no schemas; is Fcitx5 running with the Rime addon?",
                 file=sys.stderr,
             )
             return 0
@@ -537,13 +553,13 @@ def cmd_schema(args) -> int:
     if args.action == "get":
         current = imestate.current_schema()
         if current is None:
-            print("ime-manager: no current schema", file=sys.stderr)
+            print("omarchy.ime: no current schema", file=sys.stderr)
             return 1
         print(current)
         return 0
 
     if not imestate.set_schema(args.schema):
-        print(f"ime-manager: could not switch to {args.schema}", file=sys.stderr)
+        print(f"omarchy.ime: could not switch to {args.schema}", file=sys.stderr)
         return 1
     print(args.schema)
     return 0
@@ -582,15 +598,15 @@ def cmd_dict(args) -> int:
             mark = "*" if option["value"] in selected else " "
             print(f"{mark} {option['value']}  {option['label']}  ({option['description']})")
         if args.action == "list":
-            print("\n* = 已选择，部署后生效（ime-manager dict add/remove 修改）")
+            print("\n* = 已选择，部署后生效（omarchy.ime dict add/remove 修改）")
         return 0
 
     current = settings.load(shell_json()).get("dictionaries", [])
     chosen = set(current)
     unknown = [dict_id for dict_id in args.ids if dict_id not in dicts.DICT_IDS]
     if unknown:
-        print("ime-manager: no such dictionary: " + ", ".join(unknown)
-              + "（ime-manager dict list 查看全部）", file=sys.stderr)
+        print("omarchy.ime: no such dictionary: " + ", ".join(unknown)
+              + "（omarchy.ime dict list 查看全部）", file=sys.stderr)
         return 1
     if args.action == "add":
         chosen.update(args.ids)
@@ -599,7 +615,7 @@ def cmd_dict(args) -> int:
     try:
         resolved = settings.save(shell_json(), {"dictionaries": sorted(chosen)})
     except ValueError as error:
-        print(f"ime-manager: {error}", file=sys.stderr)
+        print(f"omarchy.ime: {error}", file=sys.stderr)
         return 1
     written = resolved["dictionaries"]
     labels = {option["value"]: option["label"] for option in dicts.options()}
@@ -704,7 +720,7 @@ def cmd_theme(_args) -> int:
     try:
         renderer = theme_renderer()
     except Exception as error:
-        print(f"ime-manager: cannot generate the theme: {error}", file=sys.stderr)
+        print(f"omarchy.ime: cannot generate the theme: {error}", file=sys.stderr)
         return 1
     result = apply_theme(
         themes_dir(), state_dir(), renderer,
@@ -723,7 +739,7 @@ def cmd_hook(args) -> int:
     """
     directory = hooks_dir()
     if args.action == "install":
-        installed = hooks.install(directory, PLUGIN_DIR / "ime-manager", state_dir())
+        installed = hooks.install(directory, PLUGIN_DIR / "omarchy.ime", state_dir())
         print(f"installed: {installed}")
         return 0
     if args.action == "remove":
@@ -735,7 +751,7 @@ def cmd_hook(args) -> int:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(prog="ime-manager", description=__doc__)
+    parser = argparse.ArgumentParser(prog="omarchy.ime", description=__doc__)
     parser.add_argument("--version", action="version", version=VERSION)
     sub = parser.add_subparsers(dest="command", required=True)
 

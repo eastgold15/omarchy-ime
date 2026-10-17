@@ -63,7 +63,7 @@ to it.
 
 ```
 core (this repository)
-  ime-manager                 CLI; gains `extension add|remove|update|list`
+  omarchy.ime                 CLI; gains `extension add|remove|update|list`
   lib/extensions.py           NEW: fetch, validate, confirm, register, resolve
   lib/deploy.py               treats registered extensions as payload groups
   lib/generate.py             renders extension patches and settings mirrors
@@ -71,7 +71,7 @@ core (this repository)
   Panel.qml                   renders extension settings from their manifests
   payload/                    core only: fcitx5 config, rime_ice patches, theme
 
-~/.local/share/omarchy-ime/extensions/
+~/.local/share/omarchy.ime/extensions/
   registry.json               what is installed, from where, at which commit,
                               which capabilities were confirmed
   <id>/                       checkout at the pinned commit, .git removed
@@ -220,8 +220,8 @@ allowed but the install summary says so in as many words.
 ## Installing
 
 ```
-ime-manager extension add https://github.com/ryuhzk/omarchy-ime-annotation@<sha>
-ime-manager extension add --local ~/src/my-extension        # developers only
+omarchy.ime extension add https://github.com/ryuhzk/omarchy-ime-annotation@<sha>
+omarchy.ime extension add --local ~/src/my-extension        # developers only
 ```
 
 The `@<sha>` is mandatory. A URL without one is refused with the reason: a
@@ -277,7 +277,7 @@ Steps, in order, and each stops the install on failure:
    atomic write of `registry.json` (temp file, `O_EXCL`, `os.replace`).
 7. **Do not deploy.** Installing an extension records intent. The next deploy
    makes it real, the same way a settings change does. The CLI says so:
-   `Installed. Run 'ime-manager deploy' to apply it.` The panel shows the
+   `Installed. Run 'omarchy.ime deploy' to apply it.` The panel shows the
    pending-deploy footer.
 
 ## Deploying with extensions
@@ -326,7 +326,7 @@ Removing an extension removes its settings block.
 **Panel:** one section per registered extension, headed by its `name`, holding
 its settings rendered by the same controls the core uses for its own — the
 toggle row, the number field, the text field, the dropdown. The panel reads
-each manifest through `ime-manager extension list --json`, once at open and
+each manifest through `omarchy.ime extension list --json`, once at open and
 after an install or removal. There is no way for an extension to put QML,
 colours, sizes, or anything but those four controls into the panel.
 
@@ -424,14 +424,14 @@ What the mechanism guarantees, and what it does not.
 ## Removing, updating, listing
 
 ```
-ime-manager extension remove <id>       sweeps ext:<id> from the manifest (restore
+omarchy.ime extension remove <id>       sweeps ext:<id> from the manifest (restore
                                         replaced, delete created), removes the
                                         settings block, the checkout, and the
                                         registry entry; then says to deploy
-ime-manager extension update <id>@<sha> fetch + validate + conflict check as for
+omarchy.ime extension update <id>@<sha> fetch + validate + conflict check as for
                                         add; re-confirm only if capabilities grew;
                                         swap the checkout atomically; say to deploy
-ime-manager extension list [--json]     id, name, version, source, sha, capabilities,
+omarchy.ime extension list [--json]     id, name, version, source, sha, capabilities,
                                         local?, and whether the last deploy included it
 ```
 

@@ -193,7 +193,7 @@ def merge_key_violations(document, path: str = "") -> list[str]:
 
 # An arbitrary absolute path standing in for the cached dictionary. Rendering
 # takes it as an argument, so no test needs a real cache or a real $HOME.
-DICTIONARY = "/cache/omarchy-ime/dictionary/v0-test/cedict.txt"
+DICTIONARY = "/cache/omarchy.ime/dictionary/v0-test/cedict.txt"
 
 # The selection an install that used to say `japanese: true` migrates to.
 JAPANESE = ["rime_ice", "japanese_tw_eng", "sno_japanese"]
@@ -265,7 +265,7 @@ class RenderTests(unittest.TestCase):
 def classicui(**overrides):
     """The generated classicui.conf, parsed. It has no section header."""
     rendered = generate.render_fcitx5(
-        settings.resolve(overrides), "omarchy-ime")[generate.CLASSICUI_PATH]
+        settings.resolve(overrides), "omarchy.ime")[generate.CLASSICUI_PATH]
     parser = configparser.ConfigParser()
     parser.optionxform = str
     parser.read_string("[classicui]" + chr(10) + rendered)
@@ -311,15 +311,15 @@ class ClassicUiTests(unittest.TestCase):
 
     def test_it_says_it_is_generated(self):
         rendered = generate.render_fcitx5(
-            settings.resolve({}), "omarchy-ime")[generate.CLASSICUI_PATH]
+            settings.resolve({}), "omarchy.ime")[generate.CLASSICUI_PATH]
         self.assertTrue(rendered.startswith("#"))
         self.assertIn("generated", rendered.splitlines()[0])
 
     def test_rendering_it_is_pure(self):
         resolved = settings.resolve({})
         self.assertEqual(
-            generate.render_fcitx5(resolved, "omarchy-ime"),
-            generate.render_fcitx5(resolved, "omarchy-ime"),
+            generate.render_fcitx5(resolved, "omarchy.ime"),
+            generate.render_fcitx5(resolved, "omarchy.ime"),
         )
 
 

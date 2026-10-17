@@ -477,7 +477,7 @@ class FcitxWiringTests(unittest.TestCase):
     def test_the_theme_directory_name_is_the_plugins_own(self):
         # Not the Omarchy theme's name: the directory must not churn when the
         # user switches themes, or every switch would strand the old one.
-        self.assertEqual(theme.DIRECTORY, "omarchy-ime")
+        self.assertEqual(theme.DIRECTORY, "omarchy.ime")
         self.assertNotIn("ristretto", theme.DIRECTORY)
 
     def test_the_generated_classicui_config_selects_the_generated_theme(self):

@@ -1,10 +1,10 @@
-# Omarchy IME Plugin Implementation Plan
+# omarchy.ime Plugin Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** An Omarchy plugin that owns the whole input method — packages, Fcitx5 config, Rime config, dictionary assets — driven by toggles, plus bidirectional candidate annotation.
 
-**Architecture:** `Panel.qml` is display and intent only; every filesystem write goes through the `ime-manager` CLI. `ime-manager` regenerates Rime configuration whole from settings rather than editing it, records what it wrote, and fetches heavy assets only for enabled features.
+**Architecture:** `Panel.qml` is display and intent only; every filesystem write goes through the `omarchy.ime` CLI. `omarchy.ime` regenerates Rime configuration whole from settings rather than editing it, records what it wrote, and fetches heavy assets only for enabled features.
 
 **Tech Stack:** Python 3 (stdlib only), Lua 5.4 (Rime filter), QML (Quickshell), `omarchy pkg` for packages.
 
@@ -14,7 +14,7 @@
 
 - Python 3 stdlib only. No third-party packages, no PyYAML — Rime config is generated as text from templates.
 - All code, comments, strings, and commit messages in English. No CJK except dictionary content and test fixtures.
-- Plugin id is `io.github.eastgold15.omarchy.ime`. Cache root `~/.cache/omarchy-ime/`. State root `~/.local/state/omarchy-ime/`.
+- Plugin id is `io.github.eastgold15.omarchy.ime`. Cache root `~/.cache/omarchy.ime/`. State root `~/.local/state/omarchy.ime/`.
 - Settings live inline on the widget's entry in `~/.config/omarchy/shell.json` under `bar.layout.<section>[]`, matched by `id == "io.github.eastgold15.omarchy.ime"`.
 - Pinned sources: `rime-japanese` = `4c1e65135459175136f380e90ba52acb40fdfb2d`, `rime-snomiao` = `a2f3e7c7505abe567ec282ce61f754885c413e88`.
 - Network failure must never leave the user unable to type. Missing assets degrade the feature, not the input method.
@@ -31,11 +31,11 @@ parallel. Task 3 needs Task 2. Task 4 needs Task 3. Task 9 needs Tasks 2-8.
 
 **Files:**
 
-- Create: `ime-manager`, `lib/__init__.py`, `check`, `tests/test_smoke.py`, `.gitignore`, `README.md`
+- Create: `omarchy.ime`, `lib/__init__.py`, `check`, `tests/test_smoke.py`, `.gitignore`, `README.md`
 
 **Interfaces:**
 
-- Produces: `./check` runs the whole suite; `ime-manager <command>` dispatches subcommands.
+- Produces: `./check` runs the whole suite; `omarchy.ime <command>` dispatches subcommands.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -50,7 +50,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def test_manager_reports_version():
     result = subprocess.run(
-        [sys.executable, str(ROOT / "ime-manager"), "--version"],
+        [sys.executable, str(ROOT / "omarchy.ime"), "--version"],
         capture_output=True, text=True,
     )
     assert result.returncode == 0
@@ -60,7 +60,7 @@ def test_manager_reports_version():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `python3 -m unittest tests.test_smoke -v`
-Expected: FAIL — `ime-manager` does not exist.
+Expected: FAIL — `omarchy.ime` does not exist.
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -74,7 +74,7 @@ VERSION = "0.1.0"
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="ime-manager", description=__doc__)
+    parser = argparse.ArgumentParser(prog="omarchy.ime", description=__doc__)
     parser.add_argument("--version", action="version", version=VERSION)
     parser.add_subparsers(dest="command")
     parser.parse_args(argv)
@@ -105,7 +105,7 @@ __pycache__/
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `chmod +x ime-manager check && ./check`
+Run: `chmod +x omarchy.ime check && ./check`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -466,7 +466,7 @@ git commit -m "feat: generate Rime customization from settings"
 **Files:**
 
 - Create: `lib/deploy.py`, `tests/test_deploy.py`
-- Modify: `ime-manager`
+- Modify: `omarchy.ime`
 
 **Interfaces:**
 
@@ -658,9 +658,9 @@ def uninstall(state_dir: Path, rime_dir: Path) -> list[str]:
     return removed
 ```
 
-Wire it into `ime-manager` by adding a `deploy` and an `uninstall` subparser that
+Wire it into `omarchy.ime` by adding a `deploy` and an `uninstall` subparser that
 call these with the real paths (`~/.local/share/fcitx5/rime`,
-`~/.local/state/omarchy-ime`, `<plugin>/payload/rime`).
+`~/.local/state/omarchy.ime`, `<plugin>/payload/rime`).
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -670,7 +670,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/deploy.py tests/test_deploy.py ime-manager
+git add lib/deploy.py tests/test_deploy.py omarchy.ime
 git commit -m "feat: deploy configuration and track what was installed"
 ```
 
@@ -1334,7 +1334,7 @@ git commit -m "feat: annotate candidates with the other language"
 
 **Interfaces:**
 
-- Consumes: `ime-manager status --json`, `ime-manager deploy`, `ime-manager packages install`
+- Consumes: `omarchy.ime status --json`, `omarchy.ime deploy`, `omarchy.ime packages install`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1387,10 +1387,10 @@ for `annotateHotkey`.
 Write `Panel.qml` following the structure of `ryuhzk.translation`'s panel: a
 status section showing which packages are missing and whether the dictionary is
 present, an install action, a deploy action, and the plugin's settings surfaced
-by Omarchy. The panel shells out to `ime-manager`; it performs no filesystem work
+by Omarchy. The panel shells out to `omarchy.ime`; it performs no filesystem work
 of its own.
 
-Add a `status --json` subcommand to `ime-manager` reporting missing packages,
+Add a `status --json` subcommand to `omarchy.ime` reporting missing packages,
 dictionary presence, and the last deploy time, so the panel has one call to make.
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -1401,7 +1401,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add manifest.json Panel.qml README.md tests/test_manifest.py ime-manager
+git add manifest.json Panel.qml README.md tests/test_manifest.py omarchy.ime
 git commit -m "feat: plugin manifest and bar panel"
 ```
 
@@ -1412,7 +1412,7 @@ git commit -m "feat: plugin manifest and bar panel"
 **Files:**
 
 - Create: `lib/imestate.py`, `tests/test_imestate.py`
-- Modify: `Panel.qml`, `ime-manager`
+- Modify: `Panel.qml`, `omarchy.ime`
 
 **Interfaces:**
 
@@ -1533,7 +1533,7 @@ def switch(name: str, runner=_run) -> bool:
     return code == 0
 ```
 
-Add an `ime-manager state --json` subcommand that prints `read()` as JSON, and
+Add an `omarchy.ime state --json` subcommand that prints `read()` as JSON, and
 have `Panel.qml` poll it while open and once at construction. The bar item shows
 `EN` for `latin`, the method name for `active`, and a muted dot for `closed`.
 
@@ -1545,7 +1545,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/imestate.py tests/test_imestate.py Panel.qml ime-manager
+git add lib/imestate.py tests/test_imestate.py Panel.qml omarchy.ime
 git commit -m "feat: show and switch the live input state from the bar"
 ```
 
@@ -1569,7 +1569,7 @@ difference before continuing.
 
 - [ ] **Step 2: Deploy for real and confirm typing works**
 
-Run `ime-manager deploy`, then type Chinese, switch schemas, and toggle the
+Run `omarchy.ime deploy`, then type Chinese, switch schemas, and toggle the
 annotation hotkey. All three must work before the fallback is removed.
 
 - [ ] **Step 3: Remove the dotfiles module**
@@ -1585,7 +1585,7 @@ Expected: PASS, with no `fcitx5` case remaining.
 - [ ] **Step 5: Commit both repositories**
 
 ```bash
-git -C ~/Work/omarchy-ime commit --allow-empty -m "chore: adopted on this machine"
+git -C ~/Work/omarchy.ime commit --allow-empty -m "chore: adopted on this machine"
 git -C ~/.dotfiles add -A
 git -C ~/.dotfiles commit -m "chore: retire the fcitx5 module in favour of io.github.eastgold15.omarchy.ime"
 ```

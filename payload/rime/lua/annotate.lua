@@ -482,7 +482,7 @@ local SHOW_PINYIN = false
 
 -- Rime entry point, called once when the filter is created. The settings live in
 -- the schema, so they are read from the schema's config rather than injected:
--- `annotate/dictionary` and `annotate/show_pinyin` are what ime-manager writes
+-- `annotate/dictionary` and `annotate/show_pinyin` are what omarchy.ime writes
 -- into rime_ice.custom.yaml. Reading them here rather than in `func` keeps the
 -- per-candidate path free of config lookups.
 function M.init(env)

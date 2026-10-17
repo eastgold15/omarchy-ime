@@ -27,19 +27,19 @@ omarchy bar move io.github.eastgold15.omarchy.ime --after omarchy.clock
 
 ### 设置是在组件之后，而不是之前
 
-只在组件确实位于状态栏上之后才更改设置。设置内联在 `shell.json` 中组件自己的条目上，因此如果没有条目，就没有地方写入它们，而 `ime-manager settings set` 会拒绝而不是凭空创建一个：
+只在组件确实位于状态栏上之后才更改设置。设置内联在 `shell.json` 中组件自己的条目上，因此如果没有条目，就没有地方写入它们，而 `omarchy.ime settings set` 会拒绝而不是凭空创建一个：
 
 ```
-ime-manager: io.github.eastgold15.omarchy.ime is not on the bar in /home/you/.config/omarchy/shell.json; add it with `omarchy bar` first
+omarchy.ime: io.github.eastgold15.omarchy.ime is not on the bar in /home/you/.config/omarchy/shell.json; add it with `omarchy bar` first
 ```
 
 这是当 `shell.json` 存在且未提及此插件时的消息。如果文件根本不存在，读取会在查找条目之前失败，你会得到：
 
 ```
-ime-manager: cannot read /home/you/.config/omarchy/shell.json: [Errno 2] No such file or directory: '/home/you/.config/omarchy/shell.json'
+omarchy.ime: cannot read /home/you/.config/omarchy/shell.json: [Errno 2] No such file or directory: '/home/you/.config/omarchy/shell.json'
 ```
 
-这是刻意的，也是新用户首先会遇到的事情。读取则不同：`ime-manager settings get` 在任何时候都可用，并在组件不在状态栏上时回答默认值。
+这是刻意的，也是新用户首先会遇到的事情。读取则不同：`omarchy.ime settings get` 在任何时候都可用，并在组件不在状态栏上时回答默认值。
 
 ### 从现有设置迁移
 
@@ -48,7 +48,7 @@ ime-manager: cannot read /home/you/.config/omarchy/shell.json: [Errno 2] No such
 所以如果你今天使用的不只是全拼，请先选择它们：
 
 ```bash
-IME=~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager
+IME=~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime
 $IME schema available            # 此 Rime 安装提供的所有 schema
 $IME settings set schemas=rime_ice,double_pinyin_flypy
 ```
@@ -58,14 +58,14 @@ $IME settings set schemas=rime_ice,double_pinyin_flypy
 ## 部署
 
 ```bash
-ime-manager deploy
+omarchy.ime deploy
 ```
 
-（`ime-manager` 也可以写完整路径 `~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager`。）
+（`omarchy.ime` 也可以写完整路径 `~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime`。）
 
 部署会解析你的设置，如果候选词注释开启（且至少有一个释义方向）则下载注释词典，获取已启用功能所需的固定来源，将 Rime 配置写入 `~/.local/share/fcitx5/rime/`，将 Fcitx5 配置安装到 `~/.config/fcitx5/`，其主题文件安装到 `~/.local/share/fcitx5/themes/`，环境覆盖安装到 `~/.config/environment.d/`，并按目标分组打印它安装的每个路径。
 
-它还会在 `~/.local/bin/ime-manager` 放一个指向插件里 CLI 的软链接——Arch 默认把 `~/.local/bin` 放在 PATH 上，因此部署之后终端里直接敲 `ime-manager` 就能用。这个链接和其他部署文件一样记录在安装清单中，`ime-manager uninstall` 会把它一并移除；如果那个位置已有你自己放的文件，会先备份再替换，卸载时还原。
+它还会在 `~/.local/bin/omarchy.ime` 放一个指向插件里 CLI 的软链接——Arch 默认把 `~/.local/bin` 放在 PATH 上，因此部署之后终端里直接敲 `omarchy.ime` 就能用。这个链接和其他部署文件一样记录在安装清单中，`omarchy.ime uninstall` 会把它一并移除；如果那个位置已有你自己放的文件，会先备份再替换，卸载时还原。
 
 其中一个文件在你再次登录之前不会做任何事。systemd 在会话启动时读取 `environment.d`，因此部署写入的 `QT_IM_MODULE` 覆盖在**下次登录**时生效，而不是之前——部署会说明这一点，面板也会。
 
@@ -85,7 +85,7 @@ ime-manager deploy
 
 三种结果，它们被区分开来：
 
-- **Rebuilt（已重建）。** 两项检查都同意，`ime-manager deploy` 退出 0。
+- **Rebuilt（已重建）。** 两项检查都同意，`omarchy.ime deploy` 退出 0。
 - **Refused（被拒绝）。** 它以非零退出，打印 Rime 写入 stderr 的行，并明确说明配置在磁盘上但**未**生效。这是值得大声说出的失败——它是让人无法打字的那个。
 - **Not yet（尚未）。** fcitx5 不在会话总线上，因此没有什么可问，也没有任何问题：文件在磁盘上，fcitx5 启动时会构建它们。这是首次部署机器的普通状态，它会这样说并退出 0。触发了重建但结果无法确认——没有可读日志，或 fcitx5 在 `omarchy-fcitx5.service` 之外运行——也会退出 0 并说明是哪种，而不是声称它没有看到的重建。
 
@@ -105,19 +105,19 @@ QT_IM_MODULE=fcitx
 
 其他三个变量是从打包文件复制而非从列表写出，因此 Omarchy 上游添加的变量会被带过来，而不是被覆盖静默丢失。`XMODIFIERS` 是 XWayland 和 Qt-on-xcb 回退到的；`SDL_IM_MODULE` 和 `INPUT_METHOD` 没有 Wayland 原生等价物。
 
-它是一个普通的部署文件：记录在安装清单中，如果已有内容则备份，并由 `ime-manager uninstall` 移除——这会恢复打包行为。两个方向都在你下次登录时生效。
+它是一个普通的部署文件：记录在安装清单中，如果已有内容则备份，并由 `omarchy.ime uninstall` 移除——这会恢复打包行为。两个方向都在你下次登录时生效。
 
 ## 首次部署对已存在文件做了什么
 
 部署即将替换的每个文件首先被复制到
 
 ```
-~/.local/state/omarchy-ime/backups/<timestamp>/<target>/<path>
+~/.local/state/omarchy.ime/backups/<timestamp>/<target>/<path>
 ```
 
 每次有内容可保存的部署对应一个带时间戳的目录。在已有手工构建的 Fcitx5 和 Rime 设置的机器上，首次部署会备份它覆盖的所有内容——在真实首次运行中，那是分布在各目标中的几十个文件，包括手写的 `~/.config/environment.d/10-omarchy-fcitx.conf`。只有首次部署会大量备份：之后清单记录哪些文件是插件的，插件已拥有的文件会被重写而无需新副本。
 
-**Rime 用户数据绝不被触碰。** 插件的清单只覆盖它生成的文件以及它安装的载荷和固定来源文件。你的 `*.userdb` 目录、`sync/`、`user.yaml`、`installation.yaml` 和 `build/` 在它之外——从不写入，因为从不替换所以从不备份，也从不被 `ime-manager uninstall` 移除。你学到的短语和同步状态在部署和卸载后都存活。
+**Rime 用户数据绝不被触碰。** 插件的清单只覆盖它生成的文件以及它安装的载荷和固定来源文件。你的 `*.userdb` 目录、`sync/`、`user.yaml`、`installation.yaml` 和 `build/` 在它之外——从不写入，因为从不替换所以从不备份，也从不被 `omarchy.ime uninstall` 移除。你学到的短语和同步状态在部署和卸载后都存活。
 
 保存 `~/.config/omarchy/plugins/` 下的任何文件会自动重新加载插件代码，因此就地编辑插件无需重启 shell 即可生效。
 
@@ -126,13 +126,13 @@ QT_IM_MODULE=fcitx
 候选词窗口从 Omarchy 调色板取主题，而该主题在部署时生成——因此切换 Omarchy 主题会让候选词窗口保持旧主题绘制，直到下次部署。安装一次 theme-set 钩子，它就会自行重绘：
 
 ```bash
-~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager hook install
-~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/ime-manager hook status
+~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime hook install
+~/.config/omarchy/plugins/io.github.eastgold15.omarchy.ime/omarchy.ime hook status
 ```
 
-钩子是 `~/.config/omarchy/hooks/theme-set.d/` 中的三行 shim，以插件命名，因此不会与另一个插件的冲突。它运行 `ime-manager theme apply`，只重写内容已更改的文件并重新加载 Fcitx5 的 `classicui` 插件——不下载词典，不重建 Rime。它不会失败：`omarchy-hook` 对任何非零退出打印 "Hook failed"，而这件事无事可做的普通原因不值得在每次主题切换时都说。手动运行 `ime-manager theme apply` 查看它本来会说什么。
+钩子是 `~/.config/omarchy/hooks/theme-set.d/` 中的三行 shim，以插件命名，因此不会与另一个插件的冲突。它运行 `omarchy.ime theme apply`，只重写内容已更改的文件并重新加载 Fcitx5 的 `classicui` 插件——不下载词典，不重建 Rime。它不会失败：`omarchy-hook` 对任何非零退出打印 "Hook failed"，而这件事无事可做的普通原因不值得在每次主题切换时都说。手动运行 `omarchy.ime theme apply` 查看它本来会说什么。
 
-`ime-manager hook remove` 会移除它，`ime-manager uninstall` 也会——钩子像每个部署文件一样在安装清单中，因此不会留下指向已消失插件的钩子。
+`omarchy.ime hook remove` 会移除它，`omarchy.ime uninstall` 也会——钩子像每个部署文件一样在安装清单中，因此不会留下指向已消失插件的钩子。
 
 ## 验证它工作
 
@@ -142,12 +142,12 @@ QT_IM_MODULE=fcitx
 2. 在候选词注释开启时，开始组字并确认注释出现在候选词旁边。
 3. 按注释热键并确认它消失，然后再次按下使其回来。
 
-步骤 2 和 3 取决于 `annotation` 设置开启以及注释词典已下载——见[词典](#词典)。`ime-manager status` 报告两者，以及缺失的软件包、是否有任何内容被部署，以及下面两个 Hyprland 部分是否生效：
+步骤 2 和 3 取决于 `annotation` 设置开启以及注释词典已下载——见[词典](#词典)。`omarchy.ime status` 报告两者，以及缺失的软件包、是否有任何内容被部署，以及下面两个 Hyprland 部分是否生效：
 
 ```
 packages missing: none
 dictionary: present
-dictionary path: /home/you/.cache/omarchy-ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt
+dictionary path: /home/you/.cache/omarchy.ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt
 deployed: yes
 theme hook: installed
 hyprland candidate blur: on
@@ -155,7 +155,7 @@ hyprland input method toggle: on
 input: latin
 ```
 
-`ime-manager status --json` 是同一报告的 JSON 形式，也就是面板读取的内容。
+`omarchy.ime status --json` 是同一报告的 JSON 形式，也就是面板读取的内容。
 
 ## 设置
 
@@ -170,22 +170,22 @@ input: latin
 | `annotateShowPinyin` | `false` | 在释义前加上候选词拼音。默认关闭：释义才是重点，而拼音已经在你刚输入的内容中。 |
 | `annotateHotkey` | `Control+e` | 切换注释开关的键。以 `when: composing` 绑定——见下文。 |
 | `traditionalize` | `true` | 将 `traditionalize/opencc_config` 设为 `s2twp.json`，因此输出是台湾风格繁体。关闭则完全省略补丁。 |
-| `pageSize` | `10` | 每页候选词数（`menu/page_size`）。接受范围 1–10：手动编辑超出范围会被钳制到范围内，而 `ime-manager settings set` 会直接拒绝，而不是写回你从未要求的数字。 |
+| `pageSize` | `10` | 每页候选词数（`menu/page_size`）。接受范围 1–10：手动编辑超出范围会被钳制到范围内，而 `omarchy.ime settings set` 会直接拒绝，而不是写回你从未要求的数字。 |
 | `verticalCandidates` | `true` | 候选词垂直渲染。两个键，因为两个前端拥有答案：Rime 的 `style/horizontal`，Squirrel 和 Weasel 读取的；以及 classicui 的 `conf/classicui.conf` 中的 `Vertical Candidate List`，Fcitx5 下绘制窗口的。第二个是这里起作用的，也是为什么该文件是生成的而非自带的——它曾经是一个固定在 `True` 的载荷文件，因此开关接到了一个没有读取者的键上，关闭它什么也不做。 |
 | `backgroundImageLight` | `""` | 当_浅色_ Omarchy 主题活动时绘制在候选词后面的图像的绝对路径。空表示主题自己的背景色。 |
 | `backgroundImageDark` | `""` | _深色_主题的相同内容。两个键而非一个，因为候选词窗口跟随切换到的主题，而针对深色主题挑选的图像在浅色下不可读。接受的格式是 `.png`、`.svg`、`.svgz`、`.jpg`、`.jpeg`、`.jpe`、`.webp`、`.bmp` 和 `.gif`；路径在写入时展开并变为绝对，扩展名和文件自己的前几个字节都被检查，因为候选词窗口从扩展名选择加载器，会静默地从不加载内容与名称不符的文件。 |
 | `panelWidth` | `420` | 弹出面板多宽，以 `Style.space` 按主题间距缩放的布局单位计。从内容测量而非挑选：最宽的行是一个设置及其尾部边缘的控件，其标签必须放在旁边。接受范围 400–720；下限是没有标签省略的最窄面板。 |
 
-只读取这些键；组件条目上的其他任何内容都被忽略——包括早期版本接受的 `englishInput`。从来没有办法让它工作：Rime Ice 将 `melt_eng` 挂载为辅助翻译器，而 librime 没有列表减法运算符，因此该设置产生的 `engine/translators/-` 补丁直接使 schema 构建失败，并连带其他每个 schema 一起失败。想要纯英文的人有 `ascii_mode`，这是 Rime 和 Fcitx5 中的标准机制。留在 `shell.json` 中的陈旧 `englishInput` 在读取时被忽略；`ime-manager settings set englishInput=...` 现在会作为未知设置拒绝它。
+只读取这些键；组件条目上的其他任何内容都被忽略——包括早期版本接受的 `englishInput`。从来没有办法让它工作：Rime Ice 将 `melt_eng` 挂载为辅助翻译器，而 librime 没有列表减法运算符，因此该设置产生的 `engine/translators/-` 补丁直接使 schema 构建失败，并连带其他每个 schema 一起失败。想要纯英文的人有 `ascii_mode`，这是 Rime 和 Fcitx5 中的标准机制。留在 `shell.json` 中的陈旧 `englishInput` 在读取时被忽略；`omarchy.ime settings set englishInput=...` 现在会作为未知设置拒绝它。
 
 两种经过验证的更改方式。CLI：
 
 ```bash
-ime-manager settings get                       # 解析值，填入默认值
-ime-manager settings set schemas=rime_ice,double_pinyin_flypy pageSize=5
+omarchy.ime settings get                       # 解析值，填入默认值
+omarchy.ime settings set schemas=rime_ice,double_pinyin_flypy pageSize=5
 ```
 
-以及面板自己的控件，它们为显示的每个控件调用 `ime-manager settings set`——因此 CLI 会拒绝的值在那里也会被拒绝，控件会弹回真相。`settings set` 写入是原子的（临时文件，然后重命名），只重写给定的键，并保持 Omarchy 自己的两空格缩进，因为半写入的 `shell.json` 会拖垮整个状态栏而不只是这个插件。
+以及面板自己的控件，它们为显示的每个控件调用 `omarchy.ime settings set`——因此 CLI 会拒绝的值在那里也会被拒绝，控件会弹回真相。`settings set` 写入是原子的（临时文件，然后重命名），只重写给定的键，并保持 Omarchy 自己的两空格缩进，因为半写入的 `shell.json` 会拖垮整个状态栏而不只是这个插件。
 
 手动编辑 `shell.json` 是第三种方式，也是唯一跳过验证的方式：那里类型错误或超出范围的值会被静默解析为可部署的内容，而不是被拒绝。这就是重点——状态栏配置中的拼写错误绝不能阻止输入法部署。
 
@@ -193,7 +193,7 @@ ime-manager settings set schemas=rime_ice,double_pinyin_flypy pageSize=5
 
 ## 候选词注释
 
-默认关闭。在面板中用_候选词注释_开关或 `ime-manager settings set annotation=true` 打开，然后部署。当它关闭时，功能的任何部分都不会到达机器：Rime 目录中没有 `lua/annotate.lua`，没有 CC-CEDICT 下载，任何 `<schema>.custom.yaml` 中都没有注释过滤器、开关或热键绑定——部署后关闭它会在下一次移除所有三个。`ime-manager status` 和每次部署都会说明它何时关闭，因此没有释义绝不是谜。
+默认关闭。在面板中用_候选词注释_开关或 `omarchy.ime settings set annotation=true` 打开，然后部署。当它关闭时，功能的任何部分都不会到达机器：Rime 目录中没有 `lua/annotate.lua`，没有 CC-CEDICT 下载，任何 `<schema>.custom.yaml` 中都没有注释过滤器、开关或热键绑定——部署后关闭它会在下一次移除所有三个。`omarchy.ime status` 和每次部署都会说明它何时关闭，因此没有释义绝不是谜。
 
 一个 Rime `lua_filter` 将每个候选词的含义放入其注释。输入 `nihao`，中文候选词带有其拼音和英文含义；输入 `abal`，英文候选词 `abalone` 带有其中文词。两个方向都来自同一个 [CC-CEDICT](https://cc-cedict.org/) 词典——一个文件，一次下载，加载时双向索引。
 
@@ -215,11 +215,11 @@ ime-manager settings set schemas=rime_ice,double_pinyin_flypy pageSize=5
 Traditional Simplified [pin1 yin1] /gloss one/gloss two/
 ```
 
-`lib/assets.py` 下载 `https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz`，解压它——gzip 是唯一被移除的东西——并缓存到 `~/.cache/omarchy-ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt`。部署在候选词注释开启且至少有一个释义方向时获取它，否则完全跳过网络——缓存中已有的副本留在原地，因为它是缓存而非配置。
+`lib/assets.py` 下载 `https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz`，解压它——gzip 是唯一被移除的东西——并缓存到 `~/.cache/omarchy.ime/dictionary/cedict_1_0_ts_utf-8_mdbg.txt`。部署在候选词注释开启且至少有一个释义方向时获取它，否则完全跳过网络——缓存中已有的副本留在原地，因为它是缓存而非配置。
 
 **没有固定。** MDBG 发布一个总是提供当前版本的 URL，没有针对旧版本的 URL，因此没有可固定的。相反，缓存按计划重新检查：超过 30 天的副本会在下次部署时再次下载，因此你跟踪上游而不是我们的快照。文件自己头部的发布戳（`#! date=`）记录在缓存的完成标记中，因此你可以看到你拥有哪个上游版本。
 
-失败的下载只损失释义，别无其他：部署仍然成功，schema 仍然构建，候选词只是显示未注释，失败的刷新保留磁盘上已有的副本。`ime-manager status` 显示词典是否已下载，面板也会说明。
+失败的下载只损失释义，别无其他：部署仍然成功，schema 仍然构建，候选词只是显示未注释，失败的刷新保留磁盘上已有的副本。`omarchy.ime status` 显示词典是否已下载，面板也会说明。
 
 ## Hyprland：插件报告但不管理的两个部分
 
@@ -230,7 +230,7 @@ Traditional Simplified [pin1 yin1] /gloss one/gloss two/
 
 **这是刻意的。** `~/.config/hypr/` 是你的——常常是某个 dotfiles 模块的——而 Omarchy 提供的唯一 drop-in 是 `~/.local/state/omarchy/toggles/hypr/*.lua`，这意味着此插件会生成可执行 Lua 到你的合成器配置中。Omarchy 自己的 `toggles.lua` 带有 `exclude` 列表正是因为那里的生成 Lua 曾经带有注入的设备名。对一个键绑定来说这是糟糕的交易。
 
-因此插件检测两者，将它们作为状态行报告在面板和 `ime-manager status` 中，并把写入留给你。每行有三个答案——**on**、**not on** 和 **cannot tell**——没有一个失败：仅仅缺失的行是未开启的可选增强，因此它戴的是柔和标记而不是紧急标记。在没有 `hyprctl` 的机器上，或不是 Hyprland 的合成器上，两者都读作 "cannot tell"，这是与 "no" 不同的答案。
+因此插件检测两者，将它们作为状态行报告在面板和 `omarchy.ime status` 中，并把写入留给你。每行有三个答案——**on**、**not on** 和 **cannot tell**——没有一个失败：仅仅缺失的行是未开启的可选增强，因此它戴的是柔和标记而不是紧急标记。在没有 `hyprctl` 的机器上，或不是 Hyprland 的合成器上，两者都读作 "cannot tell"，这是与 "no" 不同的答案。
 
 ### 切换键
 

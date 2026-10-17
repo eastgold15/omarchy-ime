@@ -1,4 +1,4 @@
-# Omarchy IME 插件：作者的设计思路
+# omarchy.ime 插件：作者的设计思路
 
 
 ## 先搞清楚两个概念：layout（布局）和 input method（输入法）
@@ -110,7 +110,7 @@ Omarchy 的 `omarchy.keyboard-layout` 指示器显示的就是这个——你现
 
 > `~/.config/hypr/` 是你的地盘，常常是 dotfiles 模块管的。Omarchy 唯一提供的 drop-in 位置是 `~/.local/state/omarchy/toggles/hypr/*.lua`，那意味着插件要往你的合成器配置里生成可执行 Lua。Omarchy 自己的 `toggles.lua` 带 `exclude` 列表，正是因为生成 Lua 曾经注入过设备名。为了一个键绑定付这个代价不值。
 
-所以插件**检测**这两样，在面板和 `ime-manager status` 里报告，但**不写**。每行有三种答案：**on**、**not on**、**cannot tell**——都不是失败。检测方式也讲究：模糊规则用 `hyprctl getoption` 读**实际生效值**（不管哪个文件设的）；切换键先查 `hyprctl binds -j`，但因为在 Omarchy 下所有绑定都返回 `__lua` 和不透明索引，查不到就读你的 Hyprland 配置文件作为次优证据。
+所以插件**检测**这两样，在面板和 `omarchy.ime status` 里报告，但**不写**。每行有三种答案：**on**、**not on**、**cannot tell**——都不是失败。检测方式也讲究：模糊规则用 `hyprctl getoption` 读**实际生效值**（不管哪个文件设的）；切换键先查 `hyprctl binds -j`，但因为在 Omarchy 下所有绑定都返回 `__lua` 和不透明索引，查不到就读你的 Hyprland 配置文件作为次优证据。
 
 ### 5. 可逆：记录“创建”还是“覆盖”
 

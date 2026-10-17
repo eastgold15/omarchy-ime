@@ -201,5 +201,5 @@ def toggle(runner=_run, config_dirs=None) -> str:
 
 
 def report(runner=_run, config_dirs=None) -> dict[str, str]:
-    """Both answers, as `ime-manager status` carries them."""
+    """Both answers, as `omarchy.ime status` carries them."""
     return {"blur": blur(runner), "toggle": toggle(runner, config_dirs)}

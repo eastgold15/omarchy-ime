@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # here because a Quickshell `Process` is as real a shell as subprocess is.
 EXECUTABLE_SOURCES = (
     sorted((ROOT / "lib").glob("*.py"))
-    + [ROOT / "ime-manager", ROOT / "Panel.qml"]
+    + [ROOT / "omarchy.ime", ROOT / "Panel.qml"]
     + sorted((ROOT / "payload").rglob("*.lua"))
 )
 
@@ -265,7 +265,7 @@ class PrivilegeSurfaceTests(unittest.TestCase):
     @classmethod
     def _code(cls, path: Path, body: str) -> str:
         """`body` with comments and docstrings gone. String literals stay."""
-        if path.suffix == ".py" or path.name == "ime-manager":
+        if path.suffix == ".py" or path.name == "omarchy.ime":
             kept = []
             try:
                 for token in tokenize.generate_tokens(io.StringIO(body).readline):
@@ -305,7 +305,7 @@ class PrivilegeSurfaceTests(unittest.TestCase):
         scanned = {path.name for path, _ in self._sources()}
         self.assertIn("packages.py", scanned)
         self.assertIn("deploy.py", scanned)
-        self.assertIn("ime-manager", scanned)
+        self.assertIn("omarchy.ime", scanned)
         self.assertIn("Panel.qml", scanned)
 
     def test_nothing_writes_a_sudoers_policy(self):

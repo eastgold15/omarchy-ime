@@ -186,7 +186,7 @@ ENVIRONMENT_TARGET = "environment"
 FCITX5_TARGET = "fcitx5"
 
 # Where the CLI symlink is installed: ~/.local/bin, which Arch puts on PATH by
-# default. A deploy links `ime-manager` there back at the plugin's own copy, so
+# default. A deploy links `omarchy.ime` there back at the plugin's own copy, so
 # the terminal gets the same entry the panel uses without a hard-coded plugin
 # path in anyone's shell configuration. Recorded in the manifest like every
 # deployed file, because a link left pointing at a removed plugin is exactly
@@ -804,6 +804,14 @@ def deploy(settings: dict, targets: dict[str, Path], state_dir: Path, payload_di
         )
         announce("environment: this takes effect at your next login")
 
+    # 旧命名(omarchy-ime)的主题目录由本插件创建,改名后把旧目录清掉,
+    # 否则 fcitx5 的主题列表里会留下一个无人维护的条目
+    themes_root = targets.get(THEME_TARGET)
+    if themes_root is not None:
+        legacy_theme = Path(themes_root) / "omarchy-ime"
+        if legacy_theme.is_dir():
+            shutil.rmtree(legacy_theme, ignore_errors=True)
+
     for name, text in sorted(_resolve_theme(theme_source, notice)["files"].items()):
         install(THEME_TARGET, f"{theme_lib.DIRECTORY}/{name}", writer(text))
 
@@ -825,7 +833,7 @@ def deploy(settings: dict, targets: dict[str, Path], state_dir: Path, payload_di
     # copies whatever it points at - and a dangling one would fail the deploy.
     bin_root = targets.get(BIN_TARGET)
     if bin_root is not None:
-        manager = Path(__file__).resolve().parent.parent / "ime-manager"
+        manager = Path(__file__).resolve().parent.parent / "omarchy.ime"
         destination = Path(bin_root) / manager.name
         destination.parent.mkdir(parents=True, exist_ok=True)
         record = previous.get(BIN_TARGET, {}).get(manager.name)
