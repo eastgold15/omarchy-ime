@@ -228,6 +228,12 @@ def cmd_deploy(_args) -> int:
         build_dir=rime_build_dir(),
         since=deploy_lib.newest_write(installed, deploy_targets()),
     )
+    if rebuild.get("activation"):
+        # The first deploy of a machine that was already running Fcitx5: the
+        # profile now names Rime, but the running group did not, so the deploy
+        # put it there and selected it. Saying so is how a user knows why their
+        # input method changed without their pressing anything.
+        print(f"rime: {rebuild['activation']}")
     if not rebuild["succeeded"]:
         print(f"omarchy.ime: {rebuild['detail']}", file=sys.stderr)
         for line in rebuild["errors"]:
@@ -257,11 +263,16 @@ def _print_rebuild_recovery() -> None:
     error message and then into a working schema again.
     """
     rime = rime_dir()
+    # rime_deployer's second positional argument is the *shared* data directory.
+    # Without it the tool uses the working directory for both, so the command
+    # the error message used to print exited 1 without saying anything - the
+    # same silent failure it was meant to explain.
+    shared = Path("/usr/share/rime-data")
     manager = Path(sys.argv[0]).name
     steps = [
         "恢复方法：",
         f"  1. 手动构建，查看 Rime 自己的报错（yaml 语法错误、词典缺失等）：",
-        f"       rime_deployer --build {rime}",
+        f"       rime_deployer --build {rime} {shared} {rime / 'build'}",
         f"  2. 按报错修复后，重启输入法：",
         f"       fcitx5 -r -d",
         f"  3. 重新部署并确认状态：",

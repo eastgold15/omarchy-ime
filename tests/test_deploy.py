@@ -950,6 +950,117 @@ class RedeployCase(unittest.TestCase):
         return deploy.redeploy(runner=runner, sleeper=self.slept.append, **options)
 
 
+class GroupRunner:
+    """A Fcitx5 whose running group is known, for the first-deploy path.
+
+    It answers the three busctl questions `ensure_rime_group` asks and records
+    the two calls that change anything. Everything else is a successful no-op,
+    because a redeploy in these tests never has a real bus.
+    """
+
+    def __init__(self, items=(("keyboard-us", "us"),), layout="us", json=True):
+        self.items = list(items)
+        self.layout = layout
+        self.json = json
+        self.commands = []
+        self.set_calls = []
+        self.selected = []
+
+    def __call__(self, command):
+        command = list(command)
+        self.commands.append(command)
+        if command[0] != "busctl":
+            return subprocess.CompletedProcess(command, 0, "", "")
+        if not self.json:
+            return subprocess.CompletedProcess(command, 0, "", "")
+        if "CurrentInputMethodGroup" in command:
+            data = ["Default"]
+        elif "FullInputMethodGroupInfo" in command:
+            data = ["Default", "keyboard-us", self.layout, {}, [
+                [name, name, "", "addon", "", "", "addon", True, item_layout, {}]
+                for name, item_layout in self.items
+            ]]
+        elif "SetInputMethodGroupInfo" in command:
+            # busctl ... Method signature group layout count (name layout)*
+            values = command[command.index("ssa(ss)") + 1:]
+            self.set_calls.append(values)
+            pairs = values[3:]
+            self.items = [
+                (pairs[index], pairs[index + 1])
+                for index in range(0, len(pairs), 2)
+            ]
+            return subprocess.CompletedProcess(command, 0, "", "")
+        elif "SetCurrentIM" in command:
+            self.selected.append(command[-1])
+            return subprocess.CompletedProcess(command, 0, "", "")
+        else:
+            data = []
+        return subprocess.CompletedProcess(
+            command, 0, json.dumps({"type": "", "data": data}), "",
+        )
+
+
+class FirstDeployActivationTests(RedeployCase):
+    """A running Fcitx5 has to learn about Rime before it can build it.
+
+    `profile` is read at startup, not after a deploy. `ReloadAddonConfig`
+    reaches only an addon that is loaded. On a machine where Rime has never
+    been selected, both are true at once, so without this step the first
+    deploy always reports "Rime did not build".
+    """
+
+    def test_a_group_without_rime_gets_it_and_selects_it(self):
+        runner = GroupRunner(items=(("keyboard-us", "us"), ("mozc", "")))
+        detail = deploy.ensure_rime_group(runner)
+        self.assertIn("added", detail)
+        self.assertEqual(
+            runner.items,
+            [("keyboard-us", "us"), ("mozc", ""), ("rime", "us")],
+        )
+        self.assertEqual(runner.selected, ["rime"])
+        self.assertEqual(len(runner.set_calls), 1)
+
+    def test_the_group_layout_is_kept_for_rime(self):
+        runner = GroupRunner(items=(("keyboard-de", "de"),), layout="de")
+        deploy.ensure_rime_group(runner)
+        self.assertEqual(runner.items[-1], ("rime", "de"))
+
+    def test_a_group_that_already_has_rime_is_not_touched(self):
+        runner = GroupRunner(items=(("keyboard-us", "us"), ("rime", "us")))
+        self.assertEqual(deploy.ensure_rime_group(runner), "")
+        self.assertEqual(runner.set_calls, [])
+        self.assertEqual(runner.selected, [])
+
+    def test_no_answer_from_busctl_changes_nothing(self):
+        runner = GroupRunner(json=False)
+        self.assertEqual(deploy.ensure_rime_group(runner), "")
+        self.assertEqual(runner.set_calls, [])
+        self.assertEqual(runner.selected, [])
+
+    def test_the_running_group_is_made_ready_before_the_reload(self):
+        runner = GroupRunner(items=(("keyboard-us", "us"),))
+        with mock.patch.object(deploy, "ensure_rime_group",
+                               return_value="added Rime") as ensure, \
+             mock.patch.object(deploy, "_journal_window", return_value=[]), \
+             mock.patch.object(deploy, "_fcitx5_running", return_value=True), \
+             mock.patch.object(deploy, "_journal_reaches_fcitx5", return_value=""), \
+             mock.patch.object(deploy, "_build_errors",
+                               return_value=([], "")):
+            result = deploy.redeploy(
+                runner=runner, sleeper=self.slept.append, settle=0.0,
+            )
+        ensure.assert_called_once_with(runner)
+        self.assertEqual(result["activation"], "added Rime")
+
+    def test_an_unreachable_fcitx5_is_not_asked_about_its_group(self):
+        with mock.patch.object(deploy, "ensure_rime_group") as ensure:
+            deploy.redeploy(
+                runner=FakeRunner(running=False), sleeper=self.slept.append,
+                settle=0.0,
+            )
+        ensure.assert_not_called()
+
+
 class RedeployTriggerTests(RedeployCase):
     """Part one: something has to ask Rime to rebuild."""
 

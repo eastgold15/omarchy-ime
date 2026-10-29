@@ -77,6 +77,8 @@ omarchy.ime deploy
 
 重建是对 Fcitx5 的 D-Bus 控制器上 `rime` 插件的 `ReloadAddonConfig` 调用。这使 fcitx5-rime 拆除其 librime 会话并重新编译每个源已更改的 schema，而不会像重启单元那样丢弃每个打开应用的输入上下文。
 
+在这之前还有一步，专门针对全新机器：Fcitx5 只在启动时读取 `profile`，而 `ReloadAddonConfig` 只能重载已经加载的 addon。首次部署时，磁盘上的 profile 虽然已经写了 Rime，但运行中的输入法组还没有它，addon 也就从未加载——直接重载会得到“Rime did not build”。所以部署会先通过 D-Bus 把 Rime 加入当前输入法组并选中它，这会加载 addon；然后才是上面的重建。这个改动只在组里确实没有 Rime 时发生，因此后续部署不会改变你正在使用的输入法。
+
 判定基于两件事，因为任何一件单独都不够。
 
 **Rime 抱怨了什么。** `omarchy-fcitx5.service` 日志从触发前取的游标开始被监视，并与 librime 实际发出的错误字符串匹配——配置编译器的四个，加上词典编译器和部署任务的，也就是缺失下载会落到的地方。所有这些都是从 `strings /usr/lib/librime.so.1` 中读出的，而不是猜测的。

@@ -104,6 +104,35 @@ PRESENCE_COMMAND = (
     "org.fcitx.Fcitx5",
 )
 
+# The running Fcitx5 keeps its own copy of the input method group. Writing
+# `profile` changes what it reads the next time it starts, not what it is using
+# now - and `ReloadAddonConfig` only reloads an addon that is already loaded.
+# On a machine where Rime has never been selected those two facts meet badly:
+# the profile on disk lists Rime, the group in memory does not, the reload finds
+# no addon to reload, and the first deploy reports "Rime did not build" even
+# though the configuration is correct. The user then has to restart Fcitx5 by
+# hand before the same deploy can succeed.
+#
+# So the deploy makes the running group agree with the file it just wrote. This
+# is the same edit Fcitx5's own configuration tool performs: add Rime to the
+# group and select it, which is what loads the addon. Selecting it is not
+# optional - adding it to the group alone leaves it unloaded and the reload
+# still does nothing.
+#
+# busctl is used rather than gdbus here because `--json=short` makes the group
+# answer parseable with the standard library. The plugin is stdlib-only, and
+# the alternative is a hand-written parser for a five-field tuple whose item
+# list nests two levels deep.
+BUSCTL = ("busctl", "--user")
+BUSCTL_CALL = BUSCTL + (
+    "call", "org.fcitx.Fcitx5", "/controller",
+    "org.fcitx.Fcitx.Controller1",
+)
+BUSCTL_JSON = BUSCTL + (
+    "--json=short", "call", "org.fcitx.Fcitx5", "/controller",
+    "org.fcitx.Fcitx.Controller1",
+)
+
 # What a failed build says. Matched as substrings because the surrounding glog
 # timestamp, thread id and source location all vary.
 #
@@ -924,6 +953,106 @@ def _run(command) -> subprocess.CompletedProcess:
     )
 
 
+def _busctl_json(runner, method: str, *arguments: str):
+    """The `data` array from a busctl JSON reply, or None when it is not one.
+
+    Nothing that arrives over the bus is trusted to have the shape asked for.
+    A missing busctl, a service that went away between two calls, or a reply
+    from something that is not Fcitx5 all read the same way: no answer, and the
+    deploy falls back to the behaviour it had before the group was touched.
+    """
+    try:
+        result = runner([*BUSCTL_JSON, method, *arguments])
+    except Exception:
+        return None
+    if result.returncode != 0:
+        return None
+    try:
+        answer = json.loads((result.stdout or "").strip())
+    except (TypeError, ValueError):
+        return None
+    data = answer.get("data") if isinstance(answer, dict) else None
+    return data if isinstance(data, list) else None
+
+
+def _busctl(runner, method: str, signature: str, *arguments: str) -> bool:
+    """Call a busctl method that has no JSON reply worth reading."""
+    try:
+        result = runner([*BUSCTL_CALL, method, signature, *arguments])
+    except Exception:
+        return False
+    return result.returncode == 0
+
+
+def _running_group(runner) -> tuple[str, str, list] | None:
+    """The current group's name, default layout, and items, or None.
+
+    `FullInputMethodGroupInfo` returns the group name, default input method,
+    default layout, properties, and an item list. Each item is a flat tuple:
+    name, display name, icon, addon, label, language, addon name again, active,
+    layout, properties. Only the first and the layout are needed to reconstruct
+    the group, and reconstructing it is what lets the deploy add Rime without
+    dropping the input methods the user already had.
+    """
+    current = _busctl_json(runner, "CurrentInputMethodGroup")
+    if not current or not isinstance(current[0], str) or not current[0]:
+        return None
+    name = current[0]
+    info = _busctl_json(runner, "FullInputMethodGroupInfo", "s", name)
+    if not info or len(info) < 5 or not isinstance(info[4], list):
+        return None
+    layout = info[2] if isinstance(info[2], str) else ""
+    return name, layout, info[4]
+
+
+def ensure_rime_group(runner=_run) -> str:
+    """Make the running Fcitx5 group contain and select Rime.
+
+    The profile has already been written when this runs. What it cannot do by
+    itself is change the group Fcitx5 is using right now, and `redeploy` cannot
+    reload an addon that has never been loaded. Adding Rime to the group and
+    selecting it is what loads the addon; the reload that follows then has
+    something to rebuild.
+
+    Returns a short human-readable detail when this deploy changed the running
+    group, and "" when it had nothing to do or could not ask. Never raises: a
+    machine without busctl, or one where the call is refused, keeps the old
+    behaviour rather than failing a deploy over an optimisation.
+    """
+    group = _running_group(runner)
+    if group is None:
+        return ""
+    name, layout, items = group
+    names = [
+        item[0] for item in items
+        if isinstance(item, list) and item and isinstance(item[0], str)
+    ]
+    if generate.RIME_IM in names:
+        return ""
+
+    entries: list[tuple[str, str]] = []
+    for item in items:
+        if not isinstance(item, list) or not item or not isinstance(item[0], str):
+            continue
+        item_layout = item[8] if len(item) > 8 and isinstance(item[8], str) else ""
+        entries.append((item[0], item_layout))
+    fallback = layout or generate.DEFAULT_LAYOUT
+    entries.append((generate.RIME_IM, fallback))
+
+    arguments = [name, fallback, str(len(entries))]
+    for im, im_layout in entries:
+        arguments.extend((im, im_layout))
+    if not _busctl(runner, "SetInputMethodGroupInfo", "ssa(ss)", *arguments):
+        return ""
+
+    # Adding an entry is not loading it. Fcitx5 loads an on-demand addon when
+    # its input method becomes current, so this is the call that makes
+    # ReloadAddonConfig reach Rime at all.
+    if not _busctl(runner, "SetCurrentIM", "s", generate.RIME_IM):
+        return "added Rime to the Fcitx5 group, but could not select it"
+    return "added Rime to the running Fcitx5 group and selected it"
+
+
 def _journal_window(runner) -> list[str]:
     """Arguments that limit the journal to what happens from now on.
 
@@ -1062,10 +1191,16 @@ def redeploy(runner=_run, sleeper=time.sleep, settle: float = SETTLE_SECONDS,
     if present is False:
         return {
             "triggered": False, "succeeded": True, "verified": False,
-            "errors": [],
+            "errors": [], "activation": "",
             "detail": "fcitx5 is not running, so it will build this"
                       " configuration when it starts",
         }
+
+    # The profile on disk is not the group in memory. On a machine where Rime
+    # has never been used the group has no Rime, so the addon was never loaded
+    # and `ReloadAddonConfig` has nothing to reload. Put Rime into the running
+    # group first; that is what makes a first deploy build instead of failing.
+    activation = ensure_rime_group(runner) if present is True else ""
 
     unusable_journal = _journal_reaches_fcitx5(runner)
 
@@ -1074,7 +1209,7 @@ def redeploy(runner=_run, sleeper=time.sleep, settle: float = SETTLE_SECONDS,
     except Exception as error:  # the trigger binary may not be installed
         return {
             "triggered": False, "succeeded": False, "verified": False,
-            "errors": [str(error)],
+            "errors": [str(error)], "activation": activation,
             "detail": "could not run the redeploy command",
         }
     if triggered.returncode != 0:
@@ -1090,13 +1225,13 @@ def redeploy(runner=_run, sleeper=time.sleep, settle: float = SETTLE_SECONDS,
         if present is not True:
             return {
                 "triggered": False, "succeeded": True, "verified": False,
-                "errors": errors,
+                "errors": errors, "activation": activation,
                 "detail": "fcitx5 could not be reached, so it will build this"
                           " configuration when it starts",
             }
         return {
             "triggered": False, "succeeded": False, "verified": False,
-            "errors": errors,
+            "errors": errors, "activation": activation,
             "detail": "the redeploy could not be triggered",
         }
 
@@ -1126,23 +1261,25 @@ def redeploy(runner=_run, sleeper=time.sleep, settle: float = SETTLE_SECONDS,
     if errors:
         return {
             "triggered": True, "succeeded": False, "verified": True,
-            "errors": errors,
+            "errors": errors, "activation": activation,
             "detail": "Rime refused to build the configuration",
         }
     if absent:
         return {
             "triggered": True, "succeeded": False, "verified": True,
             "errors": [f"Rime did not build: {', '.join(absent)}"],
+            "activation": activation,
             "detail": "Rime was asked to rebuild and did not",
         }
     if not verified:
         return {
             "triggered": True, "succeeded": True, "verified": False,
-            "errors": [],
+            "errors": [], "activation": activation,
             "detail": f"Rime was asked to rebuild, but {unreadable}",
         }
     return {
         "triggered": True, "succeeded": True, "verified": True,
+        "activation": activation,
         "errors": [],
         "detail": "Rime rebuilt the schemas",
     }
